@@ -1,0 +1,435 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply font-sans antialiased;
+  }
+  
+  [dir="rtl"] {
+    font-family: 'Noto Sans Arabic', 'Arabic UI Text', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .animate-enter {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .hover-scale {
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+  
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg;
+  }
+  
+  .card-shadow {
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.loading-shimmer {
+  animation: shimmer 1.2s ease-in-out infinite;
+  background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
+  background-size: 800px 104px;
+}
+
+/* Form improvements */
+.form-input {
+  @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+}
+
+.form-input:invalid {
+  @apply border-red-300 focus:ring-red-500 focus:border-red-500;
+}
+
+/* Button improvements */
+.btn-primary {
+  @apply bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200;
+}
+
+/* Table improvements */
+.table-row-hover {
+  @apply hover:bg-gray-50 transition-colors duration-150;
+}
+
+.table-row-selected {
+  @apply bg-blue-50 border-blue-200;
+}
+
+.table-row-warning {
+  @apply bg-yellow-50 border-yellow-200;
+}
+
+.table-row-danger {
+  @apply bg-red-50 border-red-200;
+}
+
+/* Card improvements */
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden;
+}
+
+.card-header {
+  @apply p-6 border-b border-gray-200 bg-gray-50;
+}
+
+.card-body {
+  @apply p-6;
+}
+
+.card-footer {
+  @apply p-6 border-t border-gray-200 bg-gray-50;
+}
+
+/* Modal improvements */
+.modal-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50;
+}
+
+.modal-content {
+  @apply bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+}
+
+/* Status badges */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-danger {
+  @apply bg-red-100 text-red-800;
+}
+
+.badge-info {
+  @apply bg-blue-100 text-blue-800;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .mobile-hide {
+    @apply hidden;
+  }
+  
+  .mobile-full {
+    @apply w-full;
+  }
+  
+  .mobile-stack {
+    @apply flex-col space-y-2;
+  }
+}
+
+/* RTL specific styles */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .rtl-text-right {
+  text-align: right;
+}
+
+[dir="rtl"] .rtl-text-left {
+  text-align: left;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-break {
+    page-break-after: always;
+  }
+  
+  .print-no-break {
+    page-break-inside: avoid;
+  }
+}
+
+/* وضعية الليل */
+.dark {
+  /* يمكنك تخصيص المزيد حسب الحاجة */
+}
+
+.dark body, .dark .min-h-screen {
+  background-color: #18181b !important;
+}
+
+.dark .bg-white {
+  background-color: #23232a !important;
+}
+
+.dark .text-gray-900, .dark .text-gray-700 {
+  color: #f3f4f6 !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #333646 !important;
+}
+
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.3) !important;
+}
+
+/* تخصيص Drawer (MUI) في الوضع الليلي */
+.dark .MuiDrawer-paper {
+  background-color: #23232a !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .MuiInputBase-root,
+.dark input,
+.dark textarea {
+  background-color: #18181b !important;
+  color: #f3f4f6 !important;
+  border-color: #333646 !important;
+}
+
+.dark label,
+.dark .text-gray-700,
+.dark .text-gray-900 {
+  color: #e5e7eb !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #2d2d36 !important;
+}
+
+.dark .text-gray-400 {
+  color: #a1a1aa !important;
+}
+
+.dark .border-gray-300 {
+  border-color: #444654 !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: #23232a !important;
+}
+
+/* تخصيص الجدول في الوضع الليلي */
+.dark table {
+  background-color: #18181b !important;
+}
+.dark thead.bg-gray-50 {
+  background-color: #23232a !important;
+}
+.dark tbody.bg-white {
+  background-color: #18181b !important;
+}
+.dark tr,
+.dark td,
+.dark th {
+  border-color: #333646 !important;
+}
+.dark tr:hover {
+  background-color: #23232a !important;
+}
+.dark .text-gray-900, .dark .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+.dark .text-gray-500 {
+  color: #a1a1aa !important;
+}
+.dark .bg-gray-100 {
+  background-color: #23232a !important;
+}
+.dark .bg-blue-100 {
+  background-color: #1e293b !important;
+}
+.dark .text-blue-800 {
+  color: #60a5fa !important;
+}
+.dark .bg-yellow-100 {
+  background-color: #b45309 !important;
+}
+.dark .text-yellow-800 {
+  color: #fde68a !important;
+}
+.dark .bg-green-100 {
+  background-color: #193a2c !important;
+}
+.dark .text-green-800 {
+  color: #6ee7b7 !important;
+}
+.dark .bg-red-100 {
+  background-color: #3b232a !important;
+}
+.dark .text-red-800 {
+  color: #f87171 !important;
+}
+
+/* تخصيص بطاقات الإحصائيات في الوضع الليلي */
+.dark .bg-white.rounded-xl.shadow-sm {
+  background-color: #23232a !important;
+  border-color: #333646 !important;
+}
+.dark .text-gray-900, .dark .font-bold {
+  color: #fff !important;
+}
+.dark .text-gray-600, .dark .text-gray-500 {
+  color: #cbd5e1 !important;
+}
+.dark .bg-blue-100 {
+  background-color: #1e293b !important;
+}
+.dark .bg-green-100 {
+  background-color: #193a2c !important;
+}
+.dark .bg-indigo-100 {
+  background-color: #312e81 !important;
+}
+.dark .bg-red-100 {
+  background-color: #3b232a !important;
+}
+.dark .text-blue-600 {
+  color: #60a5fa !important;
+}
+.dark .text-green-600 {
+  color: #6ee7b7 !important;
+}
+.dark .text-indigo-600 {
+  color: #a5b4fc !important;
+}
+.dark .text-red-600 {
+  color: #f87171 !important;
+}
+
+/* أجبر أيقونات Autocomplete في RTL أن تكون في اليسار */
+[dir="rtl"] .MuiAutocomplete-endAdornment {
+  right: unset !important;
+  left: 0 !important;
+  flex-direction: row-reverse !important;
+}
+
+/* إزالة كل الفراغ من جهة اليسار في RTL لمكون Autocomplete من MUI */
+[dir="rtl"] .MuiAutocomplete-root .MuiOutlinedInput-root {
+  padding-left: 0 !important;
+}
+
+[dir="rtl"] .MuiAutocomplete-root input {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: right !important;
+  margin-left: 0 !important;
+}
+
+[dir="rtl"] .MuiOutlinedInput-input {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+[dir="rtl"] .MuiAutocomplete-endAdornment {
+  right: unset !important;
+  left: 0 !important;
+  flex-direction: row-reverse !important;
+}
+
+/* ضبط البادينج من اليمين في RTL لمكون Autocomplete */
+[dir="rtl"] .MuiAutocomplete-root .MuiOutlinedInput-root {
+  padding-right: 10px !important;
+}
+
+/* الوضع الليلي لحقول الأرقام داخل MUI */
+.dark input[type="number"],
+.dark .MuiInputBase-input[type="number"],
+.dark .MuiOutlinedInput-input[type="number"] {
+  background-color: #23272f !important;
+  color: #fff !important;
+  border-color: #444 !important;
+}
+
+.dark input[type="number"]:focus,
+.dark .MuiInputBase-input[type="number"]:focus,
+.dark .MuiOutlinedInput-input[type="number"]:focus {
+  background-color: #23272f !important;
+  color: #fff !important;
+  border-color: #2563eb !important;
+}
+
+/* تخصيص عناصر select في الوضع الليلي */
+.dark select {
+  background-color: #23232a !important;
+  color: #f3f4f6 !important;
+  border-color: #333646 !important;
+}
+
+.dark select:disabled {
+  background-color: #18181b !important;
+  color: #a1a1aa !important;
+}
+
+/* تخصيص ديالوج الحذف في الوضع الليلي */
+.dark .bg-white.rounded-lg.shadow-lg {
+  background-color: #23232a !important;
+  color: #f3f4f6 !important;
+}
+.dark .text-gray-700 {
+  color: #f3f4f6 !important;
+}
+.dark .bg-gray-200 {
+  background-color: #18181b !important;
+  color: #f3f4f6 !important;
+}
+.dark .bg-gray-200:hover {
+  background-color: #23232a !important;
+}
+.dark .text-lg.font-bold, .dark .text-center {
+  color: #fff !important;
+}
