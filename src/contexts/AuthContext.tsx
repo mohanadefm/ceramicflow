@@ -34,7 +34,7 @@ export const useAuth = () => {
   return context;
 };
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://ceramicflow.onrender.com/api';
 
 // Configure axios defaults
 axios.defaults.baseURL = API_BASE_URL;
