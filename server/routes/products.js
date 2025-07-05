@@ -40,10 +40,9 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-// Get products for a warehouse
-router.get('/warehouse/:warehouseId', authenticate, async (req, res) => {
+// Get all products for the current warehouse (user)
+router.get('/', authenticate, async (req, res) => {
   try {
-    const { warehouseId } = req.params;
     const { 
       sortBy = 'createdAt',
       sortOrder = 'desc',
@@ -55,7 +54,7 @@ router.get('/warehouse/:warehouseId', authenticate, async (req, res) => {
     } = req.query;
 
     // Build filter
-    const filter = { warehouse: warehouseId };
+    const filter = { warehouse: req.user._id };
     if (hasOffer === 'true') {
       filter.hasOffer = true;
       filter.status = 'active';
@@ -120,6 +119,21 @@ router.get('/warehouse/:warehouseId', authenticate, async (req, res) => {
 // Create new product (warehouse only)
 router.post('/', authenticate, upload.single('image'), async (req, res) => {
   try {
+    // Check if SKU already exists for this specific warehouse (user)
+    const existingProduct = await Product.findOne({ 
+      sku: req.body.sku, 
+      warehouse: req.user._id 
+    });
+    
+    if (existingProduct) {
+      if (req.file) {
+        fs.unlink(req.file.path, (err) => {
+          if (err) console.error('Error deleting file:', err);
+        });
+      }
+      return res.status(400).json({ message: 'SKU already exists for this warehouse, please choose a unique SKU.' });
+    }
+
     const productData = {
       ...req.body,
       warehouse: req.user._id,
@@ -142,9 +156,6 @@ router.post('/', authenticate, upload.single('image'), async (req, res) => {
       fs.unlink(req.file.path, (err) => {
         if (err) console.error('Error deleting file:', err);
       });
-    }
-    if (error.code === 11000) {
-      return res.status(400).json({ message: 'SKU already exists, please choose a unique SKU.' });
     }
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);

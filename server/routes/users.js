@@ -1,18 +1,43 @@
 import express from 'express';
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import User from '../models/User.js';
 import { authenticate } from '../middleware/auth.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const router = express.Router();
 
+// إعداد Cloudinary
+cloudinary.config({
+  cloud_name: process.env.Cloud_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
+
+// إعداد التخزين على Cloudinary للمستخدمين
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'users',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ width: 400, height: 400, crop: 'fill' }],
+  },
+});
+
+const upload = multer({ storage: storage });
+
 // Register a new warehouse
-router.post('/register/warehouse', async (req, res) => {
+router.post('/register/warehouse', upload.single('photo'), async (req, res) => {
   try {
-    const { name, phone, email, photo, address, commercialRecord, accountNumbers, password } = req.body;
+    const { name, phone, email, address, commercialRecord, accountNumbers, password } = req.body;
     const user = new User({
       name,
       phone,
       email,
-      photo,
+      photo: req.file ? req.file.path : null,
       address,
       commercialRecord,
       accountNumbers,
@@ -30,14 +55,14 @@ router.post('/register/warehouse', async (req, res) => {
 });
 
 // Register a new exhibition
-router.post('/register/exhibition', async (req, res) => {
+router.post('/register/exhibition', upload.single('photo'), async (req, res) => {
   try {
-    const { name, phone, email, photo, address, password } = req.body;
+    const { name, phone, email, address, password } = req.body;
     const user = new User({
       name,
       phone,
       email,
-      photo,
+      photo: req.file ? req.file.path : null,
       address,
       password,
       type: 'exhibition'
@@ -84,10 +109,23 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Update user by ID
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, upload.single('photo'), async (req, res) => {
   try {
     const updateData = { ...req.body };
     if (updateData.password) delete updateData.password; // Password change should be separate
+    
+    if (req.file) {
+      updateData.photo = req.file.path;
+      
+      // حذف الصورة القديمة إذا كانت موجودة
+      const existingUser = await User.findById(req.params.id);
+      if (existingUser && existingUser.photo) {
+        // حذف الصورة من Cloudinary
+        const cloudinaryPublicId = existingUser.photo.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(cloudinaryPublicId);
+      }
+    }
+    
     const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true }).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ message: 'User updated successfully', user });

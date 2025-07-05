@@ -42,6 +42,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Helper to get full photo URL
   const getPhotoUrl = (photo: string | undefined) => {
     if (!photo) return '/logo.png';
+    // إذا كانت الصورة من Cloudinary، استخدمها مباشرة
+    if (photo.startsWith('http')) return photo;
+    // إذا كانت الصورة محلية (للتوافق مع البيانات القديمة)
     if (photo.startsWith('/uploads/')) return `http://localhost:5000${photo}`;
     return photo;
   };
@@ -101,10 +104,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       let photoUrl = accountForm.photo;
       if (accountPhoto) {
         const formData = new FormData();
-        formData.append('file', accountPhoto);
-        // Assume you have an endpoint for photo upload
-        const uploadRes = await axios.post('/uploads', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        photoUrl = uploadRes.data.url;
+        formData.append('photo', accountPhoto);
+        // رفع الصورة مباشرة إلى مسار المستخدمين
+        const uploadRes = await axios.put(`/users/${user?.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        photoUrl = uploadRes.data.user.photo;
       }
       const payload: any = {
         name: accountForm.name,
@@ -276,7 +279,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <img
                     src={getPhotoUrl(userAny?.photo)}
                     alt="User"
-                    className="w-8 h-8 rounded-full object-cover border border-primary-500 shadow"
+                    className="w-8 h-8 rounded-full object-cover border border-gray-300 shadow"
                   />
                   <span className="text-base font-medium">{user?.name}</span>
                 </button>
@@ -296,7 +299,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <span className="absolute bottom-0 right-0 block w-3 h-3 rounded-full border-2 border-white bg-green-500"></span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold truncate text-base text-gray-900 dark:text-white">{user?.name}</div>
+                        <div className="font-semibold text-base text-gray-900 dark:text-white whitespace-normal break-words">{user?.name}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-300 capitalize">{userAny?.type === 'warehouse' ? t('auth.warehouse') : t('auth.exhibition')}</div>
                       </div>
                     </div>
@@ -304,7 +307,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="py-2">
                       <button
                         className={`flex items-center w-full px-5 py-3 gap-3 text-sm font-medium rounded-xl transition-colors duration-200
-                          ${isRTL ? 'justify-end' : 'justify-start'}
+                          ${isRTL ? 'justify-end flex-row-reverse text-right' : 'justify-start'}
                           ${theme === 'dark' ? 'hover:bg-gray-800 text-gray-200' : 'hover:bg-gray-100 text-gray-700'}`}
                         onClick={() => { setUserMenuOpen(false); openAccountDialog(); }}
                       >
@@ -313,7 +316,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       </button>
                       <button
                         className={`flex items-center w-full px-5 py-3 gap-3 text-sm font-medium rounded-xl transition-colors duration-200 mt-1
-                          ${isRTL ? 'justify-end' : 'justify-start'}
+                          ${isRTL ? 'justify-end flex-row-reverse text-right' : 'justify-start'}
                           ${theme === 'dark' ? 'hover:bg-gray-800 text-gray-200' : 'hover:bg-gray-100 text-gray-700'}`}
                         onClick={() => { setUserMenuOpen(false); setSettingsDialogOpen(true); }}
                       >
@@ -323,7 +326,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
                     <div className="px-5 pb-4 pt-2">
                       <button
-                        className="flex items-center justify-center w-full gap-2 py-2 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors duration-200 text-base shadow"
+                        className={`flex items-center justify-center w-full gap-2 py-2 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors duration-200 text-base shadow ${isRTL ? 'flex-row-reverse' : ''}`}
                         onClick={() => { setUserMenuOpen(false); setLogoutDialogOpen(true); }}
                       >
                         <LogOut className="h-5 w-5" />
@@ -400,8 +403,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               fullWidth
               required
               className="mb-4 rounded-lg"
-              InputLabelProps={{ style: { color: theme === 'dark' ? '#e5e7eb' : undefined } }}
-              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined } }}
+              InputLabelProps={{
+                style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                dir: isRTL ? 'rtl' : 'ltr'
+              }}
+              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
             />
             <TextField
               label={t('form.phone') || 'رقم الجوال'}
@@ -411,8 +417,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               fullWidth
               required
               className="mb-4 rounded-lg"
-              InputLabelProps={{ style: { color: theme === 'dark' ? '#e5e7eb' : undefined } }}
-              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined } }}
+              InputLabelProps={{
+                style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                dir: isRTL ? 'rtl' : 'ltr'
+              }}
+              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
             />
             <TextField
               label={t('form.email') || 'البريد الإلكتروني'}
@@ -423,8 +432,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               required
               type="email"
               className="mb-4 rounded-lg"
-              InputLabelProps={{ style: { color: theme === 'dark' ? '#e5e7eb' : undefined } }}
-              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined } }}
+              InputLabelProps={{
+                style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                dir: isRTL ? 'rtl' : 'ltr'
+              }}
+              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
             />
             <TextField
               label={t('form.address') || 'العنوان'}
@@ -434,8 +446,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               fullWidth
               required
               className="mb-4 rounded-lg"
-              InputLabelProps={{ style: { color: theme === 'dark' ? '#e5e7eb' : undefined } }}
-              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined } }}
+              InputLabelProps={{
+                style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                dir: isRTL ? 'rtl' : 'ltr'
+              }}
+              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
             />
             {userAny?.type === 'warehouse' && (
               <>
@@ -447,8 +462,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   fullWidth
                   required
                   className="mb-4 rounded-lg"
-                  InputLabelProps={{ style: { color: theme === 'dark' ? '#e5e7eb' : undefined } }}
-                  InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined } }}
+                  InputLabelProps={{
+                    style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                    dir: isRTL ? 'rtl' : 'ltr'
+                  }}
+                  InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
                 />
                 <TextField
                   label={t('form.accountNumbers') || 'أرقام الحسابات (مفصولة بفاصلة)'}
@@ -458,29 +476,31 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   fullWidth
                   required
                   className="mb-4 rounded-lg"
-                  InputLabelProps={{ style: { color: theme === 'dark' ? '#e5e7eb' : undefined } }}
-                  InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined } }}
+                  InputLabelProps={{
+                    style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                    dir: isRTL ? 'rtl' : 'ltr'
+                  }}
+                  InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
                 />
               </>
             )}
             <DialogActions>
-              <button
-                type="button"
-                onClick={() => setAccountDialogOpen(false)}
-                className="w-full px-4 py-2 \
-                  bg-gray-200 text-gray-700 hover:bg-gray-300\
-                  dark:bg-transparent dark:text-gray-200 dark:border dark:border-gray-500 dark:hover:bg-gray-700\
-                  rounded-lg transition-all duration-200 mr-2"
-              >
-                {t('dialog.cancel') || 'إلغاء'}
-              </button>
-              <button
-                type="submit"
-                disabled={accountLoading}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                {accountLoading ? t('common.loading') || 'جاري الحفظ...' : t('dialog.save') || 'حفظ التعديلات'}
-              </button>
+              <div className={`flex w-full ${isRTL ? 'flex-row-reverse' : ''} gap-2`}>
+                <button
+                  type="button"
+                  onClick={() => setAccountDialogOpen(false)}
+                  className="w-full px-4 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-transparent dark:text-gray-200 dark:border dark:border-gray-500 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                >
+                  {t('dialog.cancel') || 'إلغاء'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={accountLoading}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  {accountLoading ? t('common.loading') || 'جاري الحفظ...' : t('dialog.save') || 'حفظ التعديلات'}
+                </button>
+              </div>
             </DialogActions>
           </form>
         </DialogContent>
@@ -506,8 +526,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               fullWidth
               required
               className="mb-4 rounded-lg"
-              InputLabelProps={{ style: { color: theme === 'dark' ? '#e5e7eb' : undefined } }}
-              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined } }}
+              InputLabelProps={{
+                style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                dir: isRTL ? 'rtl' : 'ltr'
+              }}
+              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
             />
             <TextField
               label={t('form.newPassword') || 'كلمة المرور الجديدة'}
@@ -518,8 +541,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               fullWidth
               required
               className="mb-4 rounded-lg"
-              InputLabelProps={{ style: { color: theme === 'dark' ? '#e5e7eb' : undefined } }}
-              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined } }}
+              InputLabelProps={{
+                style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                dir: isRTL ? 'rtl' : 'ltr'
+              }}
+              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
             />
             <TextField
               label={t('form.confirmPassword') || 'تأكيد كلمة المرور'}
@@ -530,27 +556,29 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               fullWidth
               required
               className="mb-4 rounded-lg"
-              InputLabelProps={{ style: { color: theme === 'dark' ? '#e5e7eb' : undefined } }}
-              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined } }}
+              InputLabelProps={{
+                style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                dir: isRTL ? 'rtl' : 'ltr'
+              }}
+              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
             />
             <DialogActions>
-              <button
-                type="button"
-                onClick={() => setSettingsDialogOpen(false)}
-                className="w-full px-4 py-2 \
-                  bg-gray-200 text-gray-700 hover:bg-gray-300\
-                  dark:bg-transparent dark:text-gray-200 dark:border dark:border-gray-500 dark:hover:bg-gray-700\
-                  rounded-lg transition-all duration-200 mr-2"
-              >
-                {t('dialog.cancel') || 'إلغاء'}
-              </button>
-              <button
-                type="submit"
-                disabled={settingsLoading}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                {settingsLoading ? t('common.loading') || 'جاري الحفظ...' : t('dialog.save') || 'حفظ التعديلات'}
-              </button>
+              <div className={`flex w-full ${isRTL ? 'flex-row-reverse' : ''} gap-2`}>
+                <button
+                  type="button"
+                  onClick={() => setSettingsDialogOpen(false)}
+                  className="w-full px-4 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-transparent dark:text-gray-200 dark:border dark:border-gray-500 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                >
+                  {t('dialog.cancel') || 'إلغاء'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={settingsLoading}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  {settingsLoading ? t('common.loading') || 'جاري الحفظ...' : t('dialog.save') || 'حفظ التعديلات'}
+                </button>
+              </div>
             </DialogActions>
           </form>
         </DialogContent>

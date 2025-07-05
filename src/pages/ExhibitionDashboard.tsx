@@ -226,9 +226,10 @@ const MaterialCard: React.FC<{ material: Material }> = ({ material }) => {
           <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
             {material.photo ? (
               <img
-                src={`http://localhost:5000${material.photo}`}
+                src={material.photo.startsWith('http') ? material.photo : `http://localhost:5000${material.photo}`}
                 alt={material.name}
                 className="w-full h-full object-cover"
+                onError={e => { e.currentTarget.src = '/logo.png'; }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

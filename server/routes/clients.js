@@ -1,26 +1,31 @@
 import express from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import Client from '../models/Client.js';
 import { authenticate } from '../middleware/auth.js';
 import Order from '../models/Order.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const router = express.Router();
 
-// إعداد التخزين للعملاء
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(process.cwd(), 'server', 'uploads');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
+// إعداد Cloudinary
+cloudinary.config({
+  cloud_name: process.env.Cloud_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
+
+// إعداد التخزين على Cloudinary للعملاء
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'clients',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ width: 400, height: 400, crop: 'fill' }],
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'client-' + uniqueSuffix + path.extname(file.originalname));
-  }
 });
 
 const upload = multer({ storage: storage });
@@ -40,7 +45,7 @@ router.post('/', authenticate, upload.single('photo'), async (req, res) => {
     }
     const clientData = {
       ...req.body,
-      photo: req.file ? `/uploads/${req.file.filename}` : null,
+      photo: req.file ? req.file.path : null,
       address: req.body.address || '',
       notes: req.body.notes || ''
     };
@@ -61,10 +66,11 @@ router.get('/', authenticate, async (req, res) => {
     sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
     // بناء شرط البحث
-    let matchQuery = {};
+    let matchQuery = { user: req.user._id };
     if (search && search.trim() !== '') {
       const searchRegex = new RegExp(search.trim(), 'i');
       matchQuery = {
+        user: req.user._id,
         $or: [
           { name: searchRegex },
           { phone: searchRegex },
@@ -140,15 +146,14 @@ router.put('/:id', authenticate, upload.single('photo'), async (req, res) => {
     const updateData = { ...req.body };
     
     if (req.file) {
-      updateData.photo = `/uploads/${req.file.filename}`;
+      updateData.photo = req.file.path;
       
       // حذف الصورة القديمة إذا كانت موجودة
       const existingClient = await Client.findById(req.params.id);
       if (existingClient && existingClient.photo) {
-        const oldPhotoPath = path.join(process.cwd(), 'server', existingClient.photo);
-        if (fs.existsSync(oldPhotoPath)) {
-          fs.unlinkSync(oldPhotoPath);
-        }
+        // حذف الصورة من Cloudinary
+        const cloudinaryPublicId = existingClient.photo.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(cloudinaryPublicId);
       }
     }
     
@@ -171,10 +176,9 @@ router.delete('/:id', authenticate, async (req, res) => {
     
     // حذف الصورة إذا كانت موجودة
     if (client.photo) {
-      const photoPath = path.join(process.cwd(), 'server', client.photo);
-      if (fs.existsSync(photoPath)) {
-        fs.unlinkSync(photoPath);
-      }
+      // حذف الصورة من Cloudinary
+      const cloudinaryPublicId = client.photo.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(cloudinaryPublicId);
     }
     
     await Client.findByIdAndDelete(req.params.id);

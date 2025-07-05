@@ -182,8 +182,8 @@ const Offers: React.FC = () => {
                           <img
                             src={offer.image.startsWith('http') ? offer.image : `http://localhost:5000${offer.image}`}
                             alt={offer.sku}
-                            style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }}
-                            onError={e => { e.currentTarget.src = '/no-image.png'; }}
+                            style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '2px solid rgb(229, 231, 235)' }}
+                                                          onError={e => { e.currentTarget.src = '/logo.png'; }}
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center">

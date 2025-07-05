@@ -326,7 +326,7 @@ const WarehouseDashboard: React.FC = () => {
             {/* أكثر الأنواع طلبًا */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[220px]">
               <h3 className="text-lg font-semibold mb-4">{t('orders.mostOrderedType') || 'أكثر الأنواع طلبًا'}</h3>
-              <div className="text-2xl font-bold text-blue-700">{t(`material.categories.${orderStats?.mostOrderedType}`) || '-'}</div>
+              <div className="text-2xl font-bold text-blue-700">{orderStats?.mostOrderedType?t(`material.categories.${orderStats?.mostOrderedType}`) || '-':'-'}</div>
             </div>
             {/* أكثر 3 دول طلبًا */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[220px]">
@@ -393,7 +393,7 @@ const WarehouseDashboard: React.FC = () => {
             />
             <StatCard
               title={t('offers.mostFrequentCategory') || 'أكثر فئة ظهورًا'}
-              value={t(`material.categories.${offerStats?.mostFrequentCategory}`) || '-'}
+              value={offerStats?.mostFrequentCategory?t(`material.categories.${offerStats?.mostFrequentCategory}`) || '-':'-'}
               icon={<BarChart3 className="h-6 w-6" />}
               color="green"
             />
@@ -405,11 +405,11 @@ const WarehouseDashboard: React.FC = () => {
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center justify-center min-h-[100px]">
               <div className="text-gray-600 text-sm mb-2">{t('offers.mostFrequentColor') || 'أكثر لون ظهورًا'}</div>
-              <div className="text-2xl font-bold text-blue-700">{t(`material.colors.${offerStats?.mostFrequentColor}`) || '-'}</div>
+              <div className="text-2xl font-bold text-blue-700">{offerStats?.mostFrequentColor?t(`material.colors.${offerStats?.mostFrequentColor}`) || '-':'-'}</div>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center justify-center min-h-[100px]">
               <div className="text-gray-600 text-sm mb-2">{t('offers.mostFrequentCountry') || 'أكثر بلد منشأ ظهورًا'}</div>
-              <div className="text-2xl font-bold text-blue-700">{t(`material.countries.${offerStats?.mostFrequentCountry}`) || '-'}</div>
+              <div className="text-2xl font-bold text-blue-700">{offerStats?.mostFrequentCountry?t(`material.countries.${offerStats?.mostFrequentCountry}`) || '-':'-'}</div>
             </div>
           </div>
         </section>
@@ -443,7 +443,8 @@ const WarehouseDashboard: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <span className="text-gray-400">{t('clients.noClientStats') || 'لا توجد بيانات عملاء كافية.'}</span>
+              <div className="text-2xl font-bold text-blue-700">-</div>
+              
             )}
           </div>
         </section>

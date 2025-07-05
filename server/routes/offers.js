@@ -61,13 +61,19 @@ router.get('/', authenticate, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    // أولاً: جلب جميع منتجات المستخدم الحالي
+    const Product = (await import('../models/Product.js')).default;
+    const userProducts = await Product.find({ warehouse: req.user._id }).select('_id');
+    const userProductIds = userProducts.map(p => p._id);
+
+    // ثانياً: جلب العروض المرتبطة بهذه المنتجات فقط
     const [offers, count] = await Promise.all([
-      Offer.find()
+      Offer.find({ product: { $in: userProductIds } })
         .populate('product')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }),
-      Offer.countDocuments()
+      Offer.countDocuments({ product: { $in: userProductIds } })
     ]);
     res.json({ offers, count });
   } catch (error) {

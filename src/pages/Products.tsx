@@ -104,6 +104,8 @@ const Products: React.FC = () => {
   const [countryFilter, setCountryFilter] = useState<string>('');
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [offersOnly, setOffersOnly] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [dialogImageUrl, setDialogImageUrl] = useState<string | null>(null);
   const categoryOptions = [
     { value: 'ceramic', label: t('material.Ceramic') || 'Ceramic' },
     { value: 'porcelain', label: t('material.Porcelain') || 'Porcelain' },
@@ -215,6 +217,9 @@ const Products: React.FC = () => {
     { value: 'indonesian', label: t('material.countries.indonesian') },
   ];
 
+  // متغير لتحديد إذا كانت هناك فلاتر مفعلة
+  const areFiltersActive = !!(categoryFilter || colorFilter || countryFilter || lowStockOnly || offersOnly);
+
   useEffect(() => {
     if (user) {
       if (searchCode.trim() !== '') {
@@ -240,7 +245,7 @@ const Products: React.FC = () => {
       if (countryFilter) params.country = countryFilter;
       if (lowStockOnly) params.lowStock = true;
       if (offersOnly) params.hasOffer = true;
-      const response = await axios.get(`/products/warehouse/${user.id}`, {
+      const response = await axios.get('/products', {
         params
       });
       setMaterials(response.data.products);
@@ -378,7 +383,7 @@ const Products: React.FC = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label={t('material.category')}
+                  // label={t('material.category')}
                   placeholder={t('material.selectCategory') || 'Select category'}
                   size="small"
                   sx={{ minWidth: 220 }}
@@ -399,7 +404,7 @@ const Products: React.FC = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label={t('material.color') || 'Color'}
+                  // label={t('material.color') || 'Color'}
                   placeholder={t('material.colors.selectColor') || 'Select color'}
                   size="small"
                   sx={{ minWidth: 220, }}
@@ -420,7 +425,7 @@ const Products: React.FC = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label={t('material.country') || 'Country'}
+                  // label={t('material.country') || 'Country'}
                   placeholder={t('material.countries.selectCountry') || 'Select country'}
                   size="small"
                   sx={{ minWidth: 220 }}
@@ -467,7 +472,8 @@ const Products: React.FC = () => {
                 setOffersOnly(false);
                 setPage(1);
               }}
-              className="px-3 py-1 rounded bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 transition-colors text-sm"
+              className="px-3 py-1 rounded bg-gray-100 border border-gray-300 text-gray-700 transition-colors text-sm disabled:opacity-50 disabled:hover:bg-gray-100 hover:bg-gray-200"
+              disabled={!areFiltersActive}
             >
               {t('common.resetFilters') || 'Reset Filters'}
             </button>
@@ -521,13 +527,18 @@ const Products: React.FC = () => {
                             />
                           </div>
                         )}
-                        <div className="h-12 w-12 rounded-lg bg-gray-100 overflow-hidden">
+                        <div className="h-12 w-12 rounded-lg bg-gray-100 overflow-hidden cursor-pointer group" onClick={() => {
+                          if (material.image) {
+                            setDialogImageUrl(material.image.startsWith('http') ? material.image : `http://localhost:5000${material.image}`);
+                            setShowImageDialog(true);
+                          }
+                        }}>
                           {material.image ? (
                             <img
                               src={material.image.startsWith('http') ? material.image : `http://localhost:5000${material.image}`}
                               alt={material.name}
-                              style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }}
-                              onError={e => { e.currentTarget.src = '/no-image.png'; }}
+                              style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '2px solid rgb(229, 231, 235)' }}
+                              onError={e => { e.currentTarget.src = '/logo.png'; }}
                             />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center">
@@ -627,6 +638,32 @@ const Products: React.FC = () => {
                   >
                     ≫
                   </button>
+                </div>
+              )}
+              {/* Image Dialog Modal */}
+              {showImageDialog && dialogImageUrl && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
+                  onClick={() => setShowImageDialog(false)}
+                >
+                  <div
+                    className="bg-white rounded-lg shadow-lg p-4 max-w-full max-h-full flex flex-col items-center relative"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <button
+                      className="absolute top-2 right-2 text-gray-600 hover:text-red-500 text-2xl font-bold focus:outline-none"
+                      onClick={() => setShowImageDialog(false)}
+                      aria-label="Close"
+                    >
+                      ×
+                    </button>
+                    <img
+                      src={dialogImageUrl}
+                      alt="Product Preview"
+                      className="max-w-[90vw] max-h-[80vh] rounded-lg border border-gray-200 shadow"
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
                 </div>
               )}
             </React.Fragment>

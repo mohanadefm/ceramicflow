@@ -1,5 +1,9 @@
 {
   "common": {
+    "showing": "عرض",
+    "to": "إلى",
+    "of": "من",
+    "results": "نتائج",
     "loading": "جاري التحميل...",
     "error": "خطأ",
     "success": "نجح",
@@ -46,6 +50,7 @@
     "signUp": "إنشاء حساب"
   },
   "dashboard": {
+    "clientStatistics": "إحصائيات العملاء",
     "orderStatistics": "إحصائيات الطلبات",
     "productStatistics": "إحصائيات المنتجات",
     "offerStatistics": "إحصائيات العروض",
@@ -83,6 +88,10 @@
     "nomaterials": "لا يوجد مواد"
   },
   "clients": {
+    "orderCount": "عدد الطلبات",
+    "totalClients": "إجمالي العملاء",
+    "totalOrdersByClients": "إجمالي الطلبات بالعملاء",
+    "topClientsByOrders": "أكثر العملاء طلباً",
     "clientDetails": "تفاصيل العميل",
     "detailsTitle": "تفاصيل العميل",
     "viewDetails": "عرض التفاصيل",
@@ -297,6 +306,7 @@
     "settings": "الإعدادات"
   },
   "form": {
+    "changePassword": "تغيير كلمة المرور",
     "required": "هذا الحقل مطلوب",
     "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
     "passwordMin": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
@@ -388,7 +398,8 @@
     "confirmDeleteTitle": "تأكيد حذف العرض",
     "confirmDeleteMsg": "هل أنت متأكد أنك تريد حذف هذا العرض؟",
     "deleted": "تم حذف العرض بنجاح",
-    "description": "الوصف"
+    "description": "الوصف",
+    "priceLowerThanOriginal": "سعر العرض يجب أن يكون أقل من سعر المنتج الأصلي"
   },
   "support": {
     "title": "الدعم الفني",
@@ -404,6 +415,7 @@
     "emailBtn": "أرسل بريدًا"
   },
   "orders": {
+    "searchByOrderNumber": "بحث برقم الطلب",
     "currency": "SAR",
     "totalOrders": "إجمالي الطلبات",
     "totalSales": "إجمالي المبيعات",

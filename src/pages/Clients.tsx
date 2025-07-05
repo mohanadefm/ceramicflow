@@ -321,14 +321,14 @@ const ClientDetailsDialog: React.FC<{
       <DialogContent className="bg-white dark:bg-[#23232a]">
         <div className="flex flex-col items-center gap-4 py-4">
           <div className="h-24 w-24 rounded-full bg-gray-100 overflow-hidden border-2 border-gray-200">
-            {client.photo ? (
-              <img
-                src={client.photo.startsWith('http') ? client.photo : `http://localhost:5000${client.photo}`}
-                alt={client.name}
-                className="h-full w-full object-cover"
-                onError={e => { e.currentTarget.src = '/no-image.png'; }}
-              />
-            ) : (
+                            {client.photo ? (
+                  <img
+                    src={client.photo.startsWith('http') ? client.photo : `http://localhost:5000${client.photo}`}
+                    alt={client.name}
+                    className="h-full w-full object-cover"
+                    onError={e => { e.currentTarget.src = '/logo.png'; }}
+                  />
+                ) : (
               <div className="h-full w-full flex items-center justify-center">
                 <User className="h-12 w-12 text-gray-400" />
               </div>
@@ -582,14 +582,14 @@ const Clients: React.FC = () => {
                       <td className={`px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center`}>{clients.length - index}</td>
                       <td className={`px-2 py-4 whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'}`}>
                         <div className="h-12 w-12 rounded-full bg-gray-100 overflow-hidden">
-                          {client.photo ? (
-                            <img
-                              src={client.photo.startsWith('http') ? client.photo : `http://localhost:5000${client.photo}`}
-                              alt={client.name}
-                              className="h-full w-full object-cover"
-                              onError={e => { e.currentTarget.src = '/no-image.png'; }}
-                            />
-                          ) : (
+                                      {client.photo ? (
+              <img
+                src={client.photo.startsWith('http') ? client.photo : `http://localhost:5000${client.photo}`}
+                alt={client.name}
+                className="h-full w-full object-cover"
+                onError={e => { e.currentTarget.src = '/logo.png'; }}
+              />
+            ) : (
                             <div className="h-full w-full flex items-center justify-center">
                               <User className="h-6 w-6 text-gray-400" />
                             </div>

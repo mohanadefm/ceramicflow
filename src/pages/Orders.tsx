@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit, Trash2, ShoppingCart, Package, User, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash2, ShoppingCart, Package, User, Calendar, X } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Drawer from '@mui/material/Drawer';
@@ -94,18 +94,29 @@ const Orders: React.FC = () => {
   const [products, setProducts] = useState([]);
   const [editingCell, setEditingCell] = useState<{orderId: string, field: 'status' | 'payment'} | null>(null);
   const [updatingCell, setUpdatingCell] = useState(false);
+  const [searchOrder, setSearchOrder] = useState('');
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (user) {
-      fetchOrders();
+      if (searchOrder.trim() !== '') {
+        if (searchTimeout.current) clearTimeout(searchTimeout.current);
+        searchTimeout.current = setTimeout(() => {
+          fetchOrders(searchOrder.trim());
+        }, 400);
+      } else {
+        fetchOrders();
+      }
       fetchCustomers();
       fetchProducts();
     }
-  }, [user, page]);
+  }, [user, page, searchOrder]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (searchValue?: string) => {
     try {
-      const response = await axios.get('/orders', { params: { page, limit } });
+      const params: any = { page, limit };
+      if (searchValue) params.orderNumber = searchValue;
+      const response = await axios.get('/orders', { params });
       setOrders(response.data.orders);
       setTotalPages(Math.ceil((response.data.count || 1) / limit));
     } catch (error: any) {
@@ -127,7 +138,7 @@ const Orders: React.FC = () => {
   const fetchProducts = async () => {
     if (!user) return;
     try {
-      const response = await axios.get(`/products/warehouse/${user.id}`);
+      const response = await axios.get('/products');
       setProducts(response.data.products);
     } catch (error: any) {
       console.error('Error fetching products:', error);
@@ -217,6 +228,7 @@ const Orders: React.FC = () => {
       setEditingCell(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error.message || 'حدث خطأ أثناء التحديث');
+      fetchOrders();
     } finally {
       setUpdatingCell(false);
     }
@@ -244,13 +256,37 @@ const Orders: React.FC = () => {
               </h1>
             </div>
           </div>
-          <button
-            onClick={handleAddOrder}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2 rtl:space-x-reverse"
-          >
-            <Plus className="h-5 w-5" />
-            <span>{t('orders.addOrder') || 'Add Order'}</span>
-          </button>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchOrder}
+                onChange={e => setSearchOrder(e.target.value)}
+                placeholder={t('orders.searchByOrderNumber') || 'بحث برقم الطلب'}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-w-[180px] pr-8"
+                style={{ direction: isRTL ? 'rtl' : 'ltr' }}
+              />
+              {searchOrder && (
+                <button
+                  type="button"
+                  onClick={() => setSearchOrder('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 focus:outline-none"
+                  tabIndex={-1}
+                  aria-label={t('common.reset') || 'Reset'}
+                  style={{ padding: 0 }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <button
+              onClick={handleAddOrder}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2 rtl:space-x-reverse"
+            >
+              <Plus className="h-5 w-5" />
+              <span>{t('orders.addOrder') || 'Add Order'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -308,12 +344,12 @@ const Orders: React.FC = () => {
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
                       <div className="flex items-center space-x-3 rtl:space-x-reverse">
                         <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                          {order.customer?.image || order.customer?.photo ? (
+                          {order.customer?.photo ? (
                             <img
-                              src={order.customer.image ? (order.customer.image.startsWith('http') ? order.customer.image : `http://localhost:5000${order.customer.image}`) : `http://localhost:5000${order.customer.photo}`}
+                              src={order.customer.photo.startsWith('http') ? order.customer.photo : `http://localhost:5000${order.customer.photo}`}
                               alt={order.customer.name}
                               className="h-full w-full object-cover"
-                              onError={e => { e.currentTarget.src = '/no-image.png'; }}
+                              onError={e => { e.currentTarget.src = '/logo.png'; }}
                             />
                           ) : (
                             <User className="h-4 w-4 text-gray-600" />
@@ -333,7 +369,7 @@ const Orders: React.FC = () => {
                               src={order.product.image.startsWith('http') ? order.product.image : `http://localhost:5000${order.product.image}`}
                               alt={order.product.sku}
                               className="h-full w-full object-cover"
-                              onError={e => { e.currentTarget.src = '/no-image.png'; }}
+                              onError={e => { e.currentTarget.src = '/logo.png'; }}
                             />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center">
@@ -405,7 +441,7 @@ const Orders: React.FC = () => {
                           tabIndex={0}
                           style={{ outline: 'none' }}
                         >
-                          {order.status || 'Pending'}
+                          {t(`orders.${order.status}`) || t('orders.pending') || 'Pending'}
                         </span>
                       )}
                     </td>
@@ -429,7 +465,7 @@ const Orders: React.FC = () => {
                           tabIndex={0}
                           style={{ outline: 'none' }}
                         >
-                          {order.payment || 'Pending'}
+                          {t(`orders.${order.payment}`) || t('orders.paymentPending') || 'Pending'}
                         </span>
                       )}
                     </td>

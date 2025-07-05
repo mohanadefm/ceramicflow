@@ -235,7 +235,7 @@ const OfferModal: React.FC<OfferModalProps> = ({ offer, onClose, onSave, offers 
   const validatePrice = (value: any, selectedProduct: ProductOption | null) => {
     if (!selectedProduct) return true;
     if (Number(value) >= Number(selectedProduct.price)) {
-      return 'سعر العرض يجب أن يكون أقل من سعر المنتج الأصلي';
+      return t('offers.priceLowerThanOriginal');
     }
     return true;
   };

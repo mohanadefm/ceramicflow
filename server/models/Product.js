@@ -15,8 +15,7 @@ const productSchema = new mongoose.Schema({
   sku: {
     type: String,
     required: [true, 'SKU is required'],
-    trim: true,
-    unique: true
+    trim: true
   },
   price: {
     type: Number,
@@ -96,8 +95,8 @@ const productSchema = new mongoose.Schema({
 productSchema.index({ warehouse: 1, quantityInMeters: 1 });
 productSchema.index({ warehouse: 1, quantityInBoxes: 1 });
 
-// Compound index for uniqueness constraint
-productSchema.index({ warehouse: 1, sku: 1 }, { unique: true });
+// Compound index for uniqueness constraint - temporarily disabled
+// productSchema.index({ warehouse: 1, sku: 1 }, { unique: true });
 
 // Virtual for low stock check
 productSchema.virtual('isLowStock').get(function() {

@@ -56,7 +56,13 @@ router.get('/', authenticate, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const orders = await Order.find()
+    // دعم البحث الجزئي برقم الطلب
+    let filter = { warehouse: req.user._id };
+    if (req.query.orderNumber) {
+      filter.orderNumber = { $regex: req.query.orderNumber, $options: 'i' };
+    }
+
+    const orders = await Order.find(filter)
       .populate('customer', 'name email phone photo')
       .populate('product', 'name sku image category hasOffer offerPrice items_per_box length width price')
       .populate('warehouse', 'name')
@@ -64,7 +70,7 @@ router.get('/', authenticate, async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    const count = await Order.countDocuments();
+    const count = await Order.countDocuments(filter);
 
     res.json({ 
       orders, 
@@ -165,16 +171,36 @@ router.put('/:id', authenticate, async (req, res) => {
   try {
     // اجلب الطلب القديم للتحقق من الحالة السابقة
     const oldOrder = await Order.findById(req.params.id);
-    const wasConfirmed = oldOrder && oldOrder.status === 'confirmed';
-    // حدث الطلب
+    if (!oldOrder) return res.status(404).json({ message: 'Order not found' });
+    const wasConfirmed = oldOrder.status === 'confirmed';
+
+    // تحقق من الكمية قبل تحديث الطلب إذا كان سيتم تأكيد الطلب الآن ولم يكن مؤكداً سابقاً
+    if (req.body.status === 'confirmed' && !wasConfirmed) {
+      const productId = req.body.product || oldOrder.product;
+      const product = await Product.findById(productId);
+      if (product) {
+        if (typeof product.quantityInBoxes === 'number') {
+          if (product.quantityInBoxes < req.body.quantity) {
+            return res.status(400).json({
+              message: 'Insufficient boxes in product',
+              error: req.headers['accept-language'] === 'ar' ?
+                `الكمية المطلوبة (${req.body.quantity}) أكبر من عدد الصناديق المتوفرة (${product.quantityInBoxes}) في المنتج.` :
+                `Requested quantity (${req.body.quantity}) exceeds available boxes (${product.quantityInBoxes}) in the product.`
+            });
+          }
+        }
+      }
+    }
+
+    // الآن حدث الطلب بعد التحقق
     const order = await Order.findByIdAndUpdate(
-      req.params.id, 
-      req.body, 
+      req.params.id,
+      req.body,
       { new: true, runValidators: true }
     ).populate('customer', 'name email phone photo')
      .populate('product', 'name sku image category hasOffer offerPrice items_per_box length width price')
      .populate('warehouse', 'name');
-    
+
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     // إذا تم تغيير الحالة إلى confirmed ولم يكن الطلب مؤكداً سابقاً
@@ -183,14 +209,6 @@ router.put('/:id', authenticate, async (req, res) => {
       const product = await Product.findById(productId);
       if (product) {
         if (typeof product.quantityInBoxes === 'number') {
-          if (product.quantityInBoxes < order.quantity) {
-            return res.status(400).json({
-              message: 'Insufficient boxes in product',
-              error: req.headers['accept-language'] === 'ar' ?
-                `الكمية المطلوبة (${order.quantity}) أكبر من عدد الصناديق المتوفرة (${product.quantityInBoxes}) في المنتج.` :
-                `Requested quantity (${order.quantity}) exceeds available boxes (${product.quantityInBoxes}) in the product.`
-            });
-          }
           product.quantityInBoxes = product.quantityInBoxes - order.quantity;
         }
         // خصم الكمية بالمتر المربع
