@@ -432,6 +432,7 @@
     "addOrder": "Add Order",
     "editOrder": "Edit Order",
     "orderNumber": "Order Number",
+    "orderNo": "Order No.",
     "customer": "Customer",
     "product": "Product",
     "warehouse": "Warehouse",

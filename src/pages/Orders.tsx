@@ -223,8 +223,13 @@ const Orders: React.FC = () => {
     }
     setUpdatingCell(true);
     try {
-      await axios.put(`/orders/${order._id}`, { ...order, [field]: value });
-      setOrders(prev => prev.map(o => o._id === order._id ? { ...o, [field]: value } : o));
+      let updatedOrder = { ...order, [field]: value };
+      // If status is set to 'cancelled', set payment to 'cancelled' automatically
+      if (field === 'status' && value === 'cancelled') {
+        updatedOrder.payment = 'cancelled';
+      }
+      await axios.put(`/orders/${order._id}`, updatedOrder);
+      setOrders(prev => prev.map(o => o._id === order._id ? { ...o, ...updatedOrder } : o));
       setEditingCell(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error.message || 'حدث خطأ أثناء التحديث');
@@ -302,7 +307,7 @@ const Orders: React.FC = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
-                    {t('orders.orderNumber') || 'Order #'}
+                    {t('orders.orderNo') || 'Order #'}
                   </th>
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
                     {t('orders.customer') || 'Customer'}
@@ -362,29 +367,9 @@ const Orders: React.FC = () => {
                       </div>
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
-                      <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                        <div className="h-8 w-8 rounded-lg bg-gray-100 overflow-hidden">
-                          {order.product?.image ? (
-                            <img
-                              src={order.product.image.startsWith('http') ? order.product.image : `http://localhost:5000${order.product.image}`}
-                              alt={order.product.sku}
-                              className="h-full w-full object-cover"
-                              onError={e => { e.currentTarget.src = '/logo.png'; }}
-                            />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center">
-                              <Package className="h-4 w-4 text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{order.product?.name}</div>
-                          <div className="text-sm text-gray-500">{order.sku}</div>
-                          {order.product?.category && (
-                            <div className="text-xs text-gray-400 mt-0.5">{t(`material.${order.product.category}`) || order.product.category}</div>
-                          )}
-                        </div>
-                      </div>
+                      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-md">
+                        {order.product?.sku || order.product?.name}
+                      </span>
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
                       <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
@@ -393,32 +378,12 @@ const Orders: React.FC = () => {
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
                       <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
-                        {(() => {
-                          const itemsPerBox = Number(order.product?.items_per_box) || 0;
-                          const length = Number(order.product?.length) || 0;
-                          const width = Number(order.product?.width) || 0;
-                          let price = Number(order.product?.price) || 0;
-                          if (order.product?.hasOffer && order.product?.offerPrice) {
-                            price = Number(order.product.offerPrice);
-                          }
-                          const calculatedUnitPrice = (length * width / 10000) * itemsPerBox * price;
-                          return calculatedUnitPrice.toFixed(2);
-                        })()}
+                        {Number(order.unitPrice).toFixed(2)}
                       </span>
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
                       <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
-                        {(() => {
-                          const itemsPerBox = Number(order.product?.items_per_box) || 0;
-                          const length = Number(order.product?.length) || 0;
-                          const width = Number(order.product?.width) || 0;
-                          let price = Number(order.product?.price) || 0;
-                          if (order.product?.hasOffer && order.product?.offerPrice) {
-                            price = Number(order.product.offerPrice);
-                          }
-                          const calculatedUnitPrice = (length * width / 10000) * itemsPerBox * price;
-                          return (order.quantity * calculatedUnitPrice).toFixed(2);
-                        })()}
+                        {Number(order.totalPrice).toFixed(2)}
                       </span>
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -433,6 +398,7 @@ const Orders: React.FC = () => {
                         >
                           <option value="pending" disabled={order.status === 'confirmed'}>{t('orders.pending') || 'Pending'}</option>
                           <option value="confirmed">{t('orders.confirmed') || 'Confirmed'}</option>
+                          <option value="cancelled">{t('orders.cancelled') || 'Cancelled'}</option>
                         </select>
                       ) : (
                         <span
@@ -457,6 +423,7 @@ const Orders: React.FC = () => {
                         >
                           <option value="pending">{t('orders.paymentPending') || 'Pending'}</option>
                           <option value="paid">{t('orders.paid') || 'Paid'}</option>
+                          {/* <option value="cancelled">{t('orders.cancelled') || 'Cancelled'}</option> */}
                         </select>
                       ) : (
                         <span
@@ -682,6 +649,13 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
     setFormData({ ...formData, quantity: value });
   };
 
+  // Auto-set payment to 'cancelled' if status is set to 'cancelled'
+  useEffect(() => {
+    if (formData.status === 'cancelled' && formData.payment !== 'cancelled') {
+      setFormData(prev => ({ ...prev, payment: 'cancelled' }));
+    }
+  }, [formData.status]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (quantityError) {
@@ -857,6 +831,39 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
               placeholder={t('orders.notes') || 'Add any notes here...'}
             />
           </div>
+
+          {/* <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('orders.status') || 'Status'}
+            </label>
+            <select
+              value={formData.status}
+              onChange={e => setFormData({ ...formData, status: e.target.value as any })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="pending">{t('orders.pending') || 'Pending'}</option>
+              <option value="confirmed">{t('orders.confirmed') || 'Confirmed'}</option>
+              <option value="cancelled">{t('orders.cancelled') || 'Cancelled'}</option>
+            </select>
+          </div> */}
+
+          {/* <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('orders.payment') || 'Payment'}
+            </label>
+            <select
+              value={formData.payment}
+              onChange={e => setFormData({ ...formData, payment: e.target.value as any })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              disabled={formData.status === 'cancelled'}
+            >
+              <option value="pending">{t('orders.paymentPending') || 'Pending'}</option>
+              <option value="paid">{t('orders.paid') || 'Paid'}</option>
+              <option value="cancelled">{t('orders.cancelled') || 'Cancelled'}</option>
+            </select>
+          </div> */}
 
           <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4">
             {/* <button

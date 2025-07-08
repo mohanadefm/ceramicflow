@@ -47,7 +47,7 @@ interface Material {
   price: number;
   factory: string;
   type: string;
-  photo?: string;
+  image?: string;
   isLowStock: boolean;
   lowStock: boolean;
   createdAt: string;
@@ -524,10 +524,10 @@ const MaterialModal: React.FC<{
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(
-    material?.photo
-      ? (material.photo.startsWith('http')
-        ? material.photo
-        : `http://localhost:5000${material.photo}`)
+    material?.image
+      ? (material.image.startsWith('http')
+        ? material.image
+        : `http://localhost:5000${material.image}`)
       : null
   );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -565,10 +565,10 @@ const MaterialModal: React.FC<{
   useEffect(() => {
     reset(getDefaultValues());
     setImagePreview(
-      material?.photo
-        ? (material.photo.startsWith('http')
-          ? material.photo
-          : `http://localhost:5000${material.photo}`)
+      material?.image
+        ? (material.image.startsWith('http')
+          ? material.image
+          : `http://localhost:5000${material.image}`)
         : null
     );
   }, [material, reset]);
@@ -601,10 +601,10 @@ const MaterialModal: React.FC<{
       reader.readAsDataURL(file);
     } else {
       setImagePreview(
-        material?.photo
-          ? (material.photo.startsWith('http')
-            ? material.photo
-            : `http://localhost:5000${material.photo}`)
+        material?.image
+          ? (material.image.startsWith('http')
+            ? material.image
+            : `http://localhost:5000${material.image}`)
           : null
       );
     }
@@ -829,7 +829,7 @@ const MaterialModal: React.FC<{
                 onChange={handleImageChange}
                 className="hidden"
                 id="photo-upload"
-                name="photo"
+                name="image"
               />
               <label
                 htmlFor="photo-upload"
