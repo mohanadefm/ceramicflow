@@ -5,10 +5,13 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import User from '../models/User.js';
 import { authenticate } from '../middleware/auth.js';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
 const router = express.Router();
+
+console.log('USERS ROUTE LOADED');
 
 // إعداد Cloudinary
 cloudinary.config({
@@ -32,7 +35,23 @@ const upload = multer({ storage: storage });
 // Register a new warehouse
 router.post('/register/warehouse', upload.single('photo'), async (req, res) => {
   try {
-    const { name, phone, email, address, commercialRecord, accountNumbers, password } = req.body;
+    const { name, phone, email, address, commercialRecord, accountNumbers, password, taxNumber } = req.body;
+    const safeTaxNumber = taxNumber || '0000'; // قيمة افتراضية مؤقتة
+    // توليد كود المستودع
+    let lastWarehouse = await User.findOne({ type: 'warehouse' }).sort({ createdAt: -1 });
+    console.log('lastWarehouse:', lastWarehouse);
+    let nextNumber = 1;
+    if (lastWarehouse && lastWarehouse.warehouseCode) {
+      const match = lastWarehouse.warehouseCode.match(/wh(\d+)/);
+      if (match) {
+        nextNumber = parseInt(match[1], 10) + 1;
+      }
+    } else {
+      nextNumber = 1;
+    }
+    const warehouseCode = `wh${nextNumber}`;
+    console.log('req.body:', req.body);
+    console.log('Generated warehouseCode:', warehouseCode);
     const user = new User({
       name,
       phone,
@@ -42,13 +61,20 @@ router.post('/register/warehouse', upload.single('photo'), async (req, res) => {
       commercialRecord,
       accountNumbers,
       password,
+      taxNumber: safeTaxNumber,
+      warehouseCode,
       type: 'warehouse'
     });
     await user.save();
-    res.status(201).json({ message: 'Warehouse registered successfully', user });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ message: 'Warehouse registered successfully', user, token });
   } catch (error) {
+    console.error('Error while saving user:', error);
+    if (error.errors) {
+      console.error('Validation errors:', error.errors);
+    }
     if (error.code === 11000) {
-      return res.status(400).json({ message: 'Email already exists' });
+      return res.status(400).json({ message: 'Email or warehouse code already exists' });
     }
     res.status(500).json({ message: 'Failed to register warehouse', error: error.message });
   }
@@ -57,7 +83,7 @@ router.post('/register/warehouse', upload.single('photo'), async (req, res) => {
 // Register a new exhibition
 router.post('/register/exhibition', upload.single('photo'), async (req, res) => {
   try {
-    const { name, phone, email, address, password } = req.body;
+    const { name, phone, email, address, password, taxNumber } = req.body;
     const user = new User({
       name,
       phone,
@@ -65,11 +91,17 @@ router.post('/register/exhibition', upload.single('photo'), async (req, res) => 
       photo: req.file ? req.file.path : null,
       address,
       password,
+      taxNumber,
       type: 'exhibition'
     });
     await user.save();
-    res.status(201).json({ message: 'Exhibition registered successfully', user });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ message: 'Exhibition registered successfully', user, token });
   } catch (error) {
+    console.error('Error while saving user:', error);
+    if (error.errors) {
+      console.error('Validation errors:', error.errors);
+    }
     if (error.code === 11000) {
       return res.status(400).json({ message: 'Email already exists' });
     }

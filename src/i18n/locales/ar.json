@@ -85,7 +85,9 @@
     "actions": "الإجراءات",
     "adddate": "تاريخ الإضافة",
     "editdate": "تاريخ التعديل",
-    "nomaterials": "لا يوجد مواد"
+    "nomaterials": "لا يوجد مواد",
+    "taxNumber": "الرقم الضريبي",
+    "warehouseCode": "كود المستودع"
   },
   "clients": {
     "orderCount": "عدد الطلبات",

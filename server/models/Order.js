@@ -4,7 +4,6 @@ const orderSchema = new mongoose.Schema({
   orderNumber: {
     type: String,
     required: [true, 'Order number is required'],
-    unique: true,
     trim: true
   },
   createdAt: {

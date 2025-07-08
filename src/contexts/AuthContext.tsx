@@ -12,6 +12,7 @@ interface User {
   commercialRecord?: string;
   accountNumbers?: string[];
   photo?: string;
+  taxNumber: string;
 }
 
 interface AuthContextType {
@@ -19,7 +20,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, type: string) => Promise<void>;
+  register: (name: string, email: string, password: string, type: string, taxNumber?: string) => Promise<void>;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
 }
@@ -34,8 +35,10 @@ export const useAuth = () => {
   return context;
 };
 
-// const API_BASE_URL = 'http://localhost:5000/api';
-const API_BASE_URL = 'https://ceramicflow.onrender.com/api';
+const API_BASE_URL =
+  import.meta.env.MODE === 'development'
+    ? 'http://localhost:5000/api'
+    : 'https://ceramicflow.onrender.com/api';
 
 // Configure axios defaults
 axios.defaults.baseURL = API_BASE_URL;
@@ -86,16 +89,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string, type: string) => {
+  const register = async (name: string, email: string, password: string, type: string, taxNumber?: string) => {
     try {
-      const response = await axios.post('/auth/register', { name, email, password, type });
+      let response;
+      if (type === 'warehouse') {
+        response = await axios.post('/users/register/warehouse', {
+          name,
+          email,
+          password,
+          type,
+          taxNumber: taxNumber || ''
+        });
+      } else {
+        response = await axios.post('/users/register/exhibition', {
+          name,
+          email,
+          password,
+          type
+        });
+      }
       const { token, user } = response.data;
-      
       localStorage.setItem('token', token);
       setToken(token);
       setUser(user);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       toast.success('Registration successful!');
     } catch (error: any) {
       const message = error.response?.data?.message || 'Registration failed';

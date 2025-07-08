@@ -8,17 +8,23 @@ const router = express.Router();
 // Create order
 router.post('/', authenticate, async (req, res) => {
   try {
-    // توليد رقم الطلب الفريد
+    // توليد جزء التاريخ
     const today = new Date();
     const dateStr = today.toISOString().slice(0,10).replace(/-/g, ''); // YYYYMMDD
-    // جلب آخر طلب اليوم
-    const lastOrder = await Order.findOne({ orderNumber: new RegExp(`^${dateStr}`) })
-      .sort({ orderNumber: -1 });
+    // جلب آخر طلب لنفس العميل ولنفس المستودع في نفس اليوم
+    const lastOrder = await Order.findOne({
+      customer: req.body.customer,
+      warehouse: req.body.warehouse,
+      orderNumber: { $regex: `^${dateStr}-` }
+    }).sort({ orderNumber: -1 });
     let serial = 1;
     if (lastOrder) {
       const lastSerial = parseInt(lastOrder.orderNumber.split('-')[1], 10);
-      serial = lastSerial + 1;
+      if (!isNaN(lastSerial)) {
+        serial = lastSerial + 1;
+      }
     }
+    // توليد orderNumber الجديد: تاريخ اليوم + تسلسل خاص
     const orderNumber = `${dateStr}-${serial.toString().padStart(4, '0')}`;
 
     // جلب المنتج

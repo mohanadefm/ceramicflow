@@ -32,7 +32,11 @@ const Register: React.FC = () => {
 
     setLoading(true);
     try {
-      await register(formData.name, formData.email, formData.password, formData.role);
+      if (formData.role === 'warehouse') {
+        await register(formData.name, formData.email, formData.password, formData.role, '');
+      } else {
+        await register(formData.name, formData.email, formData.password, formData.role);
+      }
     } catch (error) {
       // Error is handled in the context
     } finally {
@@ -41,7 +45,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-gray-50 px-4 sm:px-6 lg:px-8 ${isRTL ? 'font-arabic' : ''}`}>
+    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-gray-50 px-4 sm:px-6 lg:px-8 ${isRTL ? 'font-arabic' : ''}`}>
       <div className="max-w-md w-full space-y-8">
         {/* Language Toggle */}
         <div className="flex justify-end">
@@ -57,10 +61,8 @@ const Register: React.FC = () => {
         {/* Header */}
         <div className="text-center">
           <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse mb-6">
-            <div className="bg-green-600 p-3 rounded-xl shadow-lg">
-              <Package className="h-8 w-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">CeramicFlow</h1>
+            <img src="/logo.png" alt="CeramicFlow Logo" width={40} height={40} />
+            <h1 className="text-2xl font-bold" style={{ color: '#0052de', fontFamily: 'Poppins, sans-serif' }}>CeramicFlow</h1>
           </div>
           <h2 className="text-3xl font-extrabold text-gray-900">
             {t('auth.registerTitle')}
@@ -90,7 +92,7 @@ const Register: React.FC = () => {
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  className={`block w-full ${isRTL ? 'pr-10 text-right' : 'pl-10'} py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200`}
+                  className={`block w-full ${isRTL ? 'pr-10 text-right' : 'pl-10'} py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200`}
                   placeholder={t('auth.name')}
                 />
               </div>
@@ -113,7 +115,7 @@ const Register: React.FC = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className={`block w-full ${isRTL ? 'pr-10 text-right' : 'pl-10'} py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200`}
+                  className={`block w-full ${isRTL ? 'pr-10 text-right' : 'pl-10'} py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200`}
                   placeholder={t('auth.email')}
                 />
               </div>
@@ -136,7 +138,7 @@ const Register: React.FC = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className={`block w-full ${isRTL ? 'pr-10 text-right' : 'pl-10'} py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200`}
+                  className={`block w-full ${isRTL ? 'pr-10 text-right' : 'pl-10'} py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200`}
                   placeholder={t('auth.password')}
                 />
               </div>
@@ -153,7 +155,7 @@ const Register: React.FC = () => {
                 required
                 value={formData.role}
                 onChange={handleChange}
-                className={`block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 ${isRTL ? 'text-right' : ''}`}
+                className={`block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${isRTL ? 'text-right' : ''}`}
               >
                 <option value="">{t('form.selectRole')}</option>
                 <option value="exhibition">
@@ -170,7 +172,7 @@ const Register: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || !formData.name || !formData.email || !formData.password || !formData.role}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 {loading ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -187,7 +189,7 @@ const Register: React.FC = () => {
               {t('auth.hasAccount')}{' '}
               <Link
                 to="/login"
-                className="font-medium text-green-600 hover:text-green-500 transition-colors duration-200"
+                className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200"
               >
                 {t('auth.signIn')}
               </Link>

@@ -86,7 +86,8 @@
     "editdate": "Edit Date",
     "actions": "Actions",
     "nomaterials": "No products found.",
-    "itemsPerBox": "Items per box"
+    "itemsPerBox": "Items per box",
+    "warehouseCode": "Warehouse Code"
   },
   "clients": {
     "noClientStats": "No client stats found.",
@@ -466,5 +467,6 @@
     "state": "State",
     "zipCode": "Zip Code",
     "country": "Country"
-  }
+  },
+  "taxNumber": "Tax Number"
 }

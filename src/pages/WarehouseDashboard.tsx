@@ -92,14 +92,14 @@ const WarehouseDashboard: React.FC = () => {
   const [clientStats, setClientStats] = useState<any>(null);
 
   useEffect(() => {
-    if (user) {
+    if (user && user.id) {
       fetchStatistics();
     }
   }, [user]);
 
   useEffect(() => {
     const fetchOrderStats = async () => {
-      if (!user) return;
+      if (!user || !user.id) return;
       try {
         const response = await axios.get(`/orders/warehouse/${user.id}/statistics`);
         setOrderStats(response.data.statistics);
@@ -109,7 +109,7 @@ const WarehouseDashboard: React.FC = () => {
     };
     fetchOrderStats();
     const fetchOfferStats = async () => {
-      if (!user) return;
+      if (!user || !user.id) return;
       try {
         const response = await axios.get(`/offers/warehouse/${user.id}/statistics`);
         setOfferStats(response.data.statistics);
@@ -120,7 +120,7 @@ const WarehouseDashboard: React.FC = () => {
     fetchOfferStats();
     // Fetch client statistics
     const fetchClientStats = async () => {
-      if (!user) return;
+      if (!user || !user.id) return;
       try {
         const response = await axios.get(`/clients/warehouse/${user.id}/statistics`);
         setClientStats(response.data.statistics);
@@ -132,8 +132,7 @@ const WarehouseDashboard: React.FC = () => {
   }, [user]);
 
   const fetchStatistics = async () => {
-    if (!user) return;
-
+    if (!user || !user.id) return;
     try {
       const response = await axios.get(`/products/warehouse/${user.id}/statistics`);
       setStatistics(response.data.statistics);

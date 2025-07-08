@@ -49,6 +49,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Type is required'],
     enum: ['warehouse', 'exhibition']
+  },
+  taxNumber: {
+    type: String,
+    // required: [true, 'Tax Number is required'],
+    trim: true
+  },
+  warehouseCode: {
+    type: String,
+    unique: true,
+    sparse: true
   }
 }, {
   timestamps: true

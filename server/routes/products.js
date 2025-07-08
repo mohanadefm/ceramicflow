@@ -265,4 +265,19 @@ router.get('/warehouse/:warehouseId/statistics', authenticate, async (req, res) 
   }
 });
 
+// جلب كل المنتجات لمخزن محدد (مع دعم forOffers)
+router.get('/warehouse/:warehouseId', authenticate, async (req, res) => {
+  try {
+    const { warehouseId } = req.params;
+    const filter = { warehouse: warehouseId };
+    if (req.query.forOffers === 'true') {
+      filter.status = 'active';
+    }
+    const products = await Product.find(filter).populate('warehouse', 'name');
+    res.json({ products });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch products for warehouse' });
+  }
+});
+
 export default router; 

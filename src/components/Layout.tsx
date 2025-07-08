@@ -78,6 +78,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       commercialRecord: userAny?.commercialRecord || '',
       accountNumbers: userAny?.accountNumbers?.join(',') || '',
       photo: userAny?.photo || '',
+      taxNumber: userAny?.taxNumber || '',
+      warehouseCode: userAny?.warehouseCode || '',
     });
     setAccountPhoto(null);
     setAccountDialogOpen(true);
@@ -115,6 +117,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         email: accountForm.email,
         address: accountForm.address,
         photo: photoUrl,
+        taxNumber: accountForm.taxNumber,
       };
       if (userAny?.type === 'warehouse') {
         payload.commercialRecord = accountForm.commercialRecord;
@@ -452,6 +455,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               }}
               InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
             />
+            <TextField
+              label={t('form.taxNumber') || 'الرقم الضريبي'}
+              name="taxNumber"
+              value={accountForm.taxNumber}
+              onChange={handleAccountChange}
+              fullWidth
+              required
+              className="mb-4 rounded-lg"
+              InputLabelProps={{
+                style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                dir: isRTL ? 'rtl' : 'ltr'
+              }}
+              InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
+            />
             {userAny?.type === 'warehouse' && (
               <>
                 <TextField
@@ -475,6 +492,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   onChange={handleAccountChange}
                   fullWidth
                   required
+                  className="mb-4 rounded-lg"
+                  InputLabelProps={{
+                    style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
+                    dir: isRTL ? 'rtl' : 'ltr'
+                  }}
+                  InputProps={{ style: { color: theme === 'dark' ? '#fff' : undefined, background: theme === 'dark' ? '#23232a' : undefined, borderRadius: 12, border: theme === 'dark' ? '1px solid #333646' : undefined, paddingRight: isRTL ? 16 : 8, paddingLeft: isRTL ? 8 : 16 } }}
+                />
+                <TextField
+                  label={t('form.warehouseCode') || 'كود المستودع'}
+                  name="warehouseCode"
+                  value={accountForm.warehouseCode}
+                  fullWidth
+                  disabled
                   className="mb-4 rounded-lg"
                   InputLabelProps={{
                     style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },

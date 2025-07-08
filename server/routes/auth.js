@@ -59,7 +59,8 @@ router.post('/register', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        type: user.type
+        type: user.type,
+        warehouseCode: user.warehouseCode
       }
     });
   } catch (error) {
@@ -121,7 +122,8 @@ router.post('/login', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        type: user.type
+        type: user.type,
+        warehouseCode: user.warehouseCode
       }
     });
   } catch (error) {
@@ -145,7 +147,9 @@ router.get('/me', authenticate, async (req, res) => {
         address: req.user.address,
         commercialRecord: req.user.commercialRecord,
         accountNumbers: req.user.accountNumbers,
-        photo: req.user.photo
+        photo: req.user.photo,
+        taxNumber: req.user.taxNumber,
+        warehouseCode: req.user.warehouseCode
       }
     });
   } catch (error) {
