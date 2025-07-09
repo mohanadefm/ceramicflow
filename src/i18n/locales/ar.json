@@ -308,6 +308,8 @@
     "settings": "الإعدادات"
   },
   "form": {
+    "warehouseCode": "كود المستودع",
+    "taxNumber": "الرقم الضريبي",
     "changePassword": "تغيير كلمة المرور",
     "required": "هذا الحقل مطلوب",
     "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
@@ -417,6 +419,9 @@
     "emailBtn": "أرسل بريدًا"
   },
   "orders": {
+    "totalSum": "المجموع الإجمالي",
+    "products": "المنتجات",
+    "addProduct": "إضافة منتج",
     "searchByOrderNumber": "بحث برقم الطلب",
     "currency": "SAR",
     "totalOrders": "إجمالي الطلبات",

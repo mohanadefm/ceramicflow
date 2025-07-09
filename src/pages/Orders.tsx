@@ -56,6 +56,7 @@ interface Order {
   actualDeliveryDate?: string;
   createdAt: string;
   updatedAt: string;
+  products: any[];
 }
 
 interface OrderFormData {
@@ -76,6 +77,14 @@ interface OrderFormData {
     country?: string;
   };
   expectedDeliveryDate?: string;
+}
+
+// تعريف نوع جديد للمنتج في الطلب
+interface OrderProductForm {
+  product: string;
+  quantity: string;
+  sku: string;
+  unitPrice: number;
 }
 
 const Orders: React.FC = () => {
@@ -324,6 +333,10 @@ const Orders: React.FC = () => {
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
                     {t('orders.totalPrice') || 'Total Price'}
                   </th>
+                  {/* New Total Sum column */}
+                  <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+                    {t('orders.totalSum') || 'Total Sum'}
+                  </th>
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
                     {t('orders.status') || 'Status'}
                   </th>
@@ -367,23 +380,63 @@ const Orders: React.FC = () => {
                       </div>
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
-                      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-md">
-                        {order.product?.sku || order.product?.name}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        {Array.isArray(order.products) && order.products.length > 0 ? (
+                          order.products.map((p: any, idx: number) => (
+                            <span key={idx} className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-md">
+                              {p.product?.sku || p.sku || p.product?.name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
+                      </div>
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
-                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
-                        {order.quantity}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        {Array.isArray(order.products) && order.products.length > 0 ? (
+                          order.products.map((p: any, idx: number) => (
+                            <span key={idx} className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
+                              {p.quantity}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
+                      </div>
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
-                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
-                        {Number(order.unitPrice).toFixed(2)}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        {Array.isArray(order.products) && order.products.length > 0 ? (
+                          order.products.map((p: any, idx: number) => (
+                            <span key={idx} className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
+                              {Number(p.unitPrice).toFixed(2)}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
+                      </div>
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
-                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
-                        {Number(order.totalPrice).toFixed(2)}
+                      <div className="flex flex-col gap-1">
+                        {Array.isArray(order.products) && order.products.length > 0 ? (
+                          order.products.map((p: any, idx: number) => (
+                            <span key={idx} className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
+                              {Number(p.totalPrice).toFixed(2)}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
+                      </div>
+                    </td>
+                    {/* New Total Sum column */}
+                    <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
+                      <span className="px-2 py-1 text-xs font-bold bg-blue-50 text-blue-800 rounded-md">
+                        {Array.isArray(order.products) && order.products.length > 0
+                          ? order.products.reduce((sum: number, p: any) => sum + Number(p.totalPrice), 0).toFixed(2)
+                          : '-'}
                       </span>
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -594,59 +647,50 @@ interface OrderModalProps {
 const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, warehouses, user, onClose, onSaved }) => {
   const { t, isRTL } = useLanguage();
   const { theme } = useTheme();
-  const [formData, setFormData] = useState<OrderFormData>({
-    customer: order?.customer?._id || '',
-    product: order?.product?._id || '',
-    warehouse: order?.warehouse?._id || user.id || '',
-    quantity: typeof order?.quantity === 'number' && !isNaN(order.quantity) ? String(order.quantity) : '',
-    sku: order?.sku || '',
-    unitPrice: typeof order?.unitPrice === 'number' && !isNaN(order.unitPrice) ? order.unitPrice : 0,
-    payment: order?.payment || 'pending',
-    status: order?.status || 'pending',
-    notes: order?.notes,
-    shippingAddress: order?.shippingAddress,
-    expectedDeliveryDate: order?.expectedDeliveryDate
-  });
+  const [formData, setFormData] = useState<{
+    customer: string;
+    warehouse: string;
+    payment: string;
+    status: string;
+    notes?: string;
+    shippingAddress?: any;
+    expectedDeliveryDate?: string;
+    products: OrderProductForm[];
+  }>(
+    order && Array.isArray((order as any).products)
+      ? {
+          customer: order.customer?._id || '',
+          warehouse: order.warehouse?._id || user.id || '',
+          payment: order.payment || 'pending',
+          status: order.status || 'pending',
+          notes: order.notes,
+          shippingAddress: order.shippingAddress,
+          expectedDeliveryDate: order.expectedDeliveryDate,
+          products: (order as any).products.map((p: any) => ({
+            product: p.product?._id || p.product,
+            quantity: String(p.quantity),
+            sku: p.sku || '',
+            unitPrice: p.unitPrice || 0
+          }))
+        }
+      : {
+          customer: '',
+          warehouse: user.id || '',
+          payment: 'pending',
+          status: 'pending',
+          products: [{ product: '', quantity: '', sku: '', unitPrice: 0 }]
+        }
+  );
   const [saving, setSaving] = useState(false);
   const [quantityError, setQuantityError] = useState<string | null>(null);
 
-  // احصل على المنتج المختار
-  const selectedProduct = products.find(p => p._id === formData.product);
-
-  // حساب unitPrice حسب المعادلة المطلوبة
-  React.useEffect(() => {
-    if (selectedProduct) {
-      let price = Number(selectedProduct.price) || 0;
-      // استخدم offerPrice إذا كان عليه عرض
-      if (selectedProduct.hasOffer && selectedProduct.offerPrice) {
-        price = Number(selectedProduct.offerPrice);
-      }
-      const itemsPerBox = Number(selectedProduct.items_per_box) || 0;
-      const length = Number(selectedProduct.length) || 0;
-      const width = Number(selectedProduct.width) || 0;
-      const calculatedUnitPrice = (length * width / 10000) * itemsPerBox * price;
-      setFormData(prev => ({ ...prev, unitPrice: calculatedUnitPrice }));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.product]);
-
   // التحقق من الكمية عند التغيير
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, '');
-    if (selectedProduct && selectedProduct.quantityInBoxes !== undefined) {
-      if (Number(value) > selectedProduct.quantityInBoxes) {
-        setQuantityError(
-          isRTL
-            ? `الحد الأقصى للكمية هو ${selectedProduct.quantityInBoxes}`
-            : `Maximum available quantity is ${selectedProduct.quantityInBoxes}`
-        );
-      } else {
-        setQuantityError(null);
-      }
-    } else {
-      setQuantityError(null);
-    }
-    setFormData({ ...formData, quantity: value });
+  const handleQuantityChange = (idx: number, value: string) => {
+    setFormData((prev) => {
+      const updated = [...prev.products];
+      updated[idx].quantity = value.replace(/[^0-9]/g, '');
+      return { ...prev, products: updated };
+    });
   };
 
   // Auto-set payment to 'cancelled' if status is set to 'cancelled'
@@ -656,17 +700,53 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
     }
   }, [formData.status]);
 
+  // دالة لإضافة منتج جديد
+  const handleAddProduct = () => {
+    setFormData((prev: any) => ({
+      ...prev,
+      products: [...prev.products, { product: '', quantity: '', sku: '', unitPrice: 0 }]
+    }));
+  };
+
+  // دالة لحذف منتج
+  const handleRemoveProduct = (idx: number) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      products: prev.products.filter((_: any, i: number) => i !== idx)
+    }));
+  };
+
+  // دالة لتغيير بيانات منتج
+  const handleProductChange = (idx: number, field: string, value: any) => {
+    setFormData((prev: any) => {
+      const updated = [...prev.products];
+      updated[idx] = { ...updated[idx], [field]: value };
+      // تحديث sku تلقائياً عند تغيير المنتج
+      if (field === 'product') {
+        const prod = products.find((p: any) => p._id === value);
+        updated[idx].sku = prod ? prod.sku : '';
+        // حساب السعر تلقائياً
+        let price = prod?.price || 0;
+        if (prod?.hasOffer && prod?.offerPrice) price = prod.offerPrice;
+        const itemsPerBox = Number(prod?.items_per_box) || 0;
+        const length = Number(prod?.length) || 0;
+        const width = Number(prod?.width) || 0;
+        updated[idx].unitPrice = (length * width / 10000) * itemsPerBox * price;
+      }
+      return { ...prev, products: updated };
+    });
+  };
+
+  // عند الحفظ: أرسل المنتجات كمصفوفة
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (quantityError) {
-      toast.error(isRTL ? 'يرجى تصحيح الكمية قبل الحفظ' : 'Please correct the quantity before saving');
-      return;
-    }
     setSaving(true);
     const dataToSend: any = {
       ...formData,
-      quantity: Number(formData.quantity),
-      totalPrice: Number(formData.quantity) * Number(formData.unitPrice)
+      products: formData.products.map((p: any) => ({
+        ...p,
+        quantity: Number(p.quantity)
+      }))
     };
     try {
       if (order) {
@@ -734,70 +814,65 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('orders.product') || 'Product'}
+              {t('orders.products') || 'Products'}
             </label>
-            <Autocomplete
-              options={products.filter(p => p.status === 'active' && Number(p.quantityInBoxes) > 0)}
-              getOptionLabel={option => (option.sku ? `${option.sku}` : '')}
-              isOptionEqualToValue={(option, value) => option._id === value._id}
-              value={products.find(p => p._id === formData.product) || null}
-              onChange={(_, value) => setFormData({
-                ...formData,
-                product: value ? value._id : '',
-                sku: value ? value.sku : '',
-                // لا تحسب السعر هنا، سيحسب تلقائياً في useEffect
-                // unitPrice: value ? value.price : 0
-              })}
-              renderInput={(params) => (
-                <TextField {...params} required placeholder={t('orders.selectProduct') || 'Select Product'} InputProps={{ ...params.InputProps, sx: { height: 40 } }} />
-              )}
-              openOnFocus
-              dir={isRTL ? 'rtl' : 'ltr'}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('orders.quantity') || 'Quantity'}
-            </label>
-            <input
-              type="number"
-              min="1"
-              placeholder={t('orders.quantity') || 'Enter quantity...'}
-              value={formData.quantity}
-              onChange={handleQuantityChange}
-              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${quantityError ? 'border-red-500' : ''}`}
-              required
-              disabled={!formData.product}
-            />
-            {quantityError && (
-              <div className="text-red-500 text-xs mt-1">{quantityError}</div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('orders.unitPrice') || 'Unit Price'}
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={Number(formData.unitPrice).toFixed(2)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              readOnly
-              disabled
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('orders.totalPrice') || 'Total Price'}
-            </label>
-            <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-900 font-medium">
-              {(Number(formData.quantity) * Number(formData.unitPrice)).toFixed(2)}
-            </div>
+            {formData.products.map((item: any, idx: number) => {
+              // المنتجات المختارة في بقية الصفوف
+              const selectedProductIds = formData.products
+                .filter((_, i: number) => i !== idx)
+                .map((p: any) => p.product)
+                .filter(Boolean);
+              return (
+                <div key={idx} className="flex gap-2 items-end mb-2">
+                  <div className="flex-1">
+                    <Autocomplete
+                      options={products.filter((p: any) =>
+                        p.status === 'active' &&
+                        Number(p.quantityInBoxes) > 0 &&
+                        !selectedProductIds.includes(p._id)
+                      )}
+                      getOptionLabel={option => (option.sku ? `${option.sku}` : '')}
+                      isOptionEqualToValue={(option, value) => option._id === value._id}
+                      value={products.find((p: any) => p._id === item.product) || null}
+                      onChange={(_, value) => handleProductChange(idx, 'product', value ? value._id : '')}
+                      renderInput={(params) => (
+                        <TextField {...params} required placeholder={t('orders.selectProduct') || 'Select Product'} InputProps={{ ...params.InputProps, sx: { height: 40 } }} />
+                      )}
+                      openOnFocus
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                    />
+                  </div>
+                  <div className="w-24">
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder={t('orders.quantity') || 'Quantity'}
+                      value={item.quantity}
+                      onChange={e => handleQuantityChange(idx, e.target.value)}
+                      className={`w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${quantityError ? 'border-red-500' : ''}`}
+                      required
+                      disabled={!item.product}
+                    />
+                  </div>
+                  <div className="w-28">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={Number(item.unitPrice).toFixed(2)}
+                      className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      readOnly
+                      disabled
+                      required
+                    />
+                  </div>
+                  <button type="button" onClick={() => handleRemoveProduct(idx)} className="text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
+                </div>
+              );
+            })}
+            <button type="button" onClick={handleAddProduct} className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+              {t('orders.addProduct') || 'Add Product'}
+            </button>
           </div>
 
           <div>
@@ -832,47 +907,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
             />
           </div>
 
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('orders.status') || 'Status'}
-            </label>
-            <select
-              value={formData.status}
-              onChange={e => setFormData({ ...formData, status: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="pending">{t('orders.pending') || 'Pending'}</option>
-              <option value="confirmed">{t('orders.confirmed') || 'Confirmed'}</option>
-              <option value="cancelled">{t('orders.cancelled') || 'Cancelled'}</option>
-            </select>
-          </div> */}
-
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('orders.payment') || 'Payment'}
-            </label>
-            <select
-              value={formData.payment}
-              onChange={e => setFormData({ ...formData, payment: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              disabled={formData.status === 'cancelled'}
-            >
-              <option value="pending">{t('orders.paymentPending') || 'Pending'}</option>
-              <option value="paid">{t('orders.paid') || 'Paid'}</option>
-              <option value="cancelled">{t('orders.cancelled') || 'Cancelled'}</option>
-            </select>
-          </div> */}
-
-          <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4">
-            {/* <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              {t('common.cancel') || 'Cancel'}
-            </button> */}
+          <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4 border-t border-gray-200">
             <button
               type="submit"
               disabled={saving}

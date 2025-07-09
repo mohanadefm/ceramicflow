@@ -298,6 +298,8 @@
     "settings": "Settings"
   },
   "form": {
+    "warehouseCode": "Warehouse Code",
+    "taxNumber": "Tax Number",
     "required": "This field is required",
     "invalidEmail": "Please enter a valid email",
     "passwordMin": "Password must be at least 6 characters",
@@ -417,6 +419,9 @@
     "emailBtn": "Send Email"
   },
   "orders": {
+    "totalSum": "Total Sum",
+    "products": "Products",
+    "addProduct": "Add Product",
     "searchByOrderNumber": "Search by Order Number",
     "currency": "SAR",
     "totalOrders": "Total Orders",

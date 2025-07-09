@@ -11,9 +11,8 @@ router.post('/', authenticate, async (req, res) => {
     // توليد جزء التاريخ
     const today = new Date();
     const dateStr = today.toISOString().slice(0,10).replace(/-/g, ''); // YYYYMMDD
-    // جلب آخر طلب لنفس العميل ولنفس المستودع في نفس اليوم
+    // جلب آخر طلب لنفس المستودع في نفس اليوم
     const lastOrder = await Order.findOne({
-      customer: req.body.customer,
       warehouse: req.body.warehouse,
       orderNumber: { $regex: `^${dateStr}-` }
     }).sort({ orderNumber: -1 });
@@ -27,26 +26,39 @@ router.post('/', authenticate, async (req, res) => {
     // توليد orderNumber الجديد: تاريخ اليوم + تسلسل خاص
     const orderNumber = `${dateStr}-${serial.toString().padStart(4, '0')}`;
 
-    // جلب المنتج
-    const product = await Product.findById(req.body.product);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+    // معالجة المنتجات
+    if (!Array.isArray(req.body.products) || req.body.products.length === 0) {
+      return res.status(400).json({ message: 'Products array is required' });
     }
-    // تحديد سعر الوحدة
-    let unitPrice;
-    if (req.body.unitPrice !== undefined) {
-      unitPrice = req.body.unitPrice;
-    } else if (product.hasOffer && product.offerPrice && product.offerPrice < product.price) {
-      unitPrice = product.offerPrice;
-    } else {
-      unitPrice = product.price;
+    const products = [];
+    for (const item of req.body.products) {
+      const product = await Product.findById(item.product);
+      if (!product) {
+        return res.status(404).json({ message: `Product not found: ${item.product}` });
+      }
+      // تحديد سعر الوحدة
+      let unitPrice;
+      if (item.unitPrice !== undefined) {
+        unitPrice = item.unitPrice;
+      } else if (product.hasOffer && product.offerPrice && product.offerPrice < product.price) {
+        unitPrice = product.offerPrice;
+      } else {
+        unitPrice = product.price;
+      }
+      products.push({
+        product: item.product,
+        quantity: item.quantity,
+        sku: item.sku || product.sku,
+        unitPrice,
+        totalPrice: unitPrice * item.quantity
+      });
     }
-    // إنشاء الطلب مع orderNumber والسعر الصحيح
+    // إنشاء الطلب
+    const { totalPrice, ...rest } = req.body;
     const order = new Order({
-      ...req.body,
+      ...rest,
       orderNumber,
-      unitPrice,
-      totalPrice: unitPrice * req.body.quantity
+      products
     });
     await order.save();
     res.status(201).json({ message: 'Order created successfully', order });
@@ -70,7 +82,7 @@ router.get('/', authenticate, async (req, res) => {
 
     const orders = await Order.find(filter)
       .populate('customer', 'name email phone photo')
-      .populate('product', 'name sku image category hasOffer offerPrice items_per_box length width price')
+      .populate('products.product', 'name sku image category hasOffer offerPrice items_per_box length width price')
       .populate('warehouse', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -102,7 +114,7 @@ router.get('/warehouse/:warehouseId', authenticate, async (req, res) => {
 
     const orders = await Order.find({ warehouse: req.params.warehouseId })
       .populate('customer', 'name email phone photo')
-      .populate('product', 'name sku image category hasOffer offerPrice items_per_box length width price')
+      .populate('products.product', 'name sku image category hasOffer offerPrice items_per_box length width price')
       .populate('warehouse', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -134,7 +146,7 @@ router.get('/customer/:customerId', authenticate, async (req, res) => {
 
     const orders = await Order.find({ customer: req.params.customerId })
       .populate('customer', 'name email phone photo')
-      .populate('product', 'name sku image category hasOffer offerPrice items_per_box length width price')
+      .populate('products.product', 'name sku image category hasOffer offerPrice items_per_box length width price')
       .populate('warehouse', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -162,7 +174,7 @@ router.get('/:id', authenticate, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('customer', 'name email phone photo')
-      .populate('product', 'name sku image category hasOffer offerPrice items_per_box length width price')
+      .populate('products.product', 'name sku image category hasOffer offerPrice items_per_box length width price')
       .populate('warehouse', 'name');
     
     if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -182,20 +194,32 @@ router.put('/:id', authenticate, async (req, res) => {
 
     // تحقق من الكمية قبل تحديث الطلب إذا كان سيتم تأكيد الطلب الآن ولم يكن مؤكداً سابقاً
     if (req.body.status === 'confirmed' && !wasConfirmed) {
-      const productId = req.body.product || oldOrder.product;
-      const product = await Product.findById(productId);
-      if (product) {
-        if (typeof product.quantityInBoxes === 'number') {
-          if (product.quantityInBoxes < req.body.quantity) {
-            return res.status(400).json({
-              message: 'Insufficient boxes in product',
-              error: req.headers['accept-language'] === 'ar' ?
-                `الكمية المطلوبة (${req.body.quantity}) أكبر من عدد الصناديق المتوفرة (${product.quantityInBoxes}) في المنتج.` :
-                `Requested quantity (${req.body.quantity}) exceeds available boxes (${product.quantityInBoxes}) in the product.`
-            });
+      const productsToCheck = req.body.products || oldOrder.products;
+      for (const item of productsToCheck) {
+        const product = await Product.findById(item.product);
+        if (product) {
+          if (typeof product.quantityInBoxes === 'number') {
+            if (product.quantityInBoxes < item.quantity) {
+              return res.status(400).json({
+                message: 'Insufficient boxes in product',
+                error: req.headers['accept-language'] === 'ar' ?
+                  `الكمية المطلوبة (${item.quantity}) أكبر من عدد الصناديق المتوفرة (${product.quantityInBoxes}) في المنتج.` :
+                  `Requested quantity (${item.quantity}) exceeds available boxes (${product.quantityInBoxes}) in the product.`
+              });
+            }
           }
         }
       }
+    }
+
+    // إعادة حساب totalPrice إذا تم تحديث المنتجات
+    if (req.body.products && Array.isArray(req.body.products)) {
+      req.body.products.forEach(p => {
+        if (p.quantity && p.unitPrice) {
+          p.totalPrice = p.quantity * p.unitPrice;
+        }
+      });
+      req.body.totalPrice = req.body.products.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
     }
 
     // الآن حدث الطلب بعد التحقق
@@ -204,30 +228,30 @@ router.put('/:id', authenticate, async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     ).populate('customer', 'name email phone photo')
-     .populate('product', 'name sku image category hasOffer offerPrice items_per_box length width price')
      .populate('warehouse', 'name');
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     // إذا تم تغيير الحالة إلى confirmed ولم يكن الطلب مؤكداً سابقاً
     if (order.status === 'confirmed' && !wasConfirmed) {
-      const productId = order.product._id || order.product;
-      const product = await Product.findById(productId);
-      if (product) {
-        if (typeof product.quantityInBoxes === 'number') {
-          product.quantityInBoxes = product.quantityInBoxes - order.quantity;
+      for (const item of order.products) {
+        const product = await Product.findById(item.product);
+        if (product) {
+          if (typeof product.quantityInBoxes === 'number') {
+            product.quantityInBoxes = product.quantityInBoxes - item.quantity;
+          }
+          // خصم الكمية بالمتر المربع
+          if (
+            typeof product.items_per_box === 'number' &&
+            typeof product.length === 'number' &&
+            typeof product.width === 'number' &&
+            typeof product.quantityInMeters === 'number'
+          ) {
+            const totalArea = item.quantity * product.items_per_box * product.length * product.width / 10000;
+            product.quantityInMeters = Math.max(0, product.quantityInMeters - totalArea);
+          }
+          await product.save();
         }
-        // خصم الكمية بالمتر المربع
-        if (
-          typeof product.items_per_box === 'number' &&
-          typeof product.length === 'number' &&
-          typeof product.width === 'number' &&
-          typeof product.quantityInMeters === 'number'
-        ) {
-          const totalArea = order.quantity * product.items_per_box * product.length * product.width / 10000;
-          product.quantityInMeters = Math.max(0, product.quantityInMeters - totalArea);
-        }
-        await product.save();
       }
     }
 
@@ -286,7 +310,7 @@ router.get('/warehouse/:warehouseId/statistics', authenticate, async (req, res) 
     const { warehouseId } = req.params;
     // اجلب كل الطلبات لهذا المستودع
     const orders = await Order.find({ warehouse: warehouseId })
-      .populate('product', 'category type color country')
+      .populate('products.product', 'category type color country')
       .populate('customer', 'name country');
 
     // فلترة الطلبات المؤكدة أو المسلمة أو المشحونة
@@ -301,16 +325,24 @@ router.get('/warehouse/:warehouseId/statistics', authenticate, async (req, res) 
     // أكثر أنواع المنتجات طلبًا (حسب مجموع الكمية)
     const categoryQuantity = {};
     confirmedOrders.forEach(o => {
-      const category = o.product?.category || 'غير محدد';
-      categoryQuantity[category] = (categoryQuantity[category] || 0) + (o.quantity || 0);
+      o.products.forEach(item => {
+        const category = item.product?.category || 'غير محدد';
+        categoryQuantity[category] = (categoryQuantity[category] || 0) + (item.quantity || 0);
+      });
     });
     const mostOrderedType = Object.entries(categoryQuantity).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
     // أكثر 3 دول طلبًا (من العميل، وإذا لم توجد من المنتج)
     const countryCount = {};
     confirmedOrders.forEach(o => {
-      const country = o.customer?.country || o.product?.country || 'غير محدد';
-      countryCount[country] = (countryCount[country] || 0) + 1;
+      if (o.customer?.country) {
+        countryCount[o.customer.country] = (countryCount[o.customer.country] || 0) + 1;
+      } else {
+        o.products.forEach(item => {
+          const country = item.product?.country || 'غير محدد';
+          countryCount[country] = (countryCount[country] || 0) + 1;
+        });
+      }
     });
     const topCountries = Object.entries(countryCount)
       .sort((a, b) => b[1] - a[1])
@@ -320,8 +352,10 @@ router.get('/warehouse/:warehouseId/statistics', authenticate, async (req, res) 
     // أكثر 3 ألوان طلبًا
     const colorCount = {};
     confirmedOrders.forEach(o => {
-      const color = o.product?.color || 'غير محدد';
-      colorCount[color] = (colorCount[color] || 0) + 1;
+      o.products.forEach(item => {
+        const color = item.product?.color || 'غير محدد';
+        colorCount[color] = (colorCount[color] || 0) + 1;
+      });
     });
     const topColors = Object.entries(colorCount)
       .sort((a, b) => b[1] - a[1])
