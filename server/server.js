@@ -18,6 +18,15 @@ import uploadsRouter from './routes/uploads.js';
 // Load environment variables
 dotenv.config();
 
+// تحقق من وجود متغيرات البيئة الأساسية
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET', 'CLOUD_NAME', 'API_KEY', 'API_SECRET'];
+requiredEnvVars.forEach(envVar => {
+  if (!process.env[envVar]) {
+    console.error(`Missing required environment variable: ${envVar}`);
+    process.exit(1);
+  }
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

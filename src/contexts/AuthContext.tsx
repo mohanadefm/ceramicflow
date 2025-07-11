@@ -38,7 +38,7 @@ export const useAuth = () => {
 const API_BASE_URL =
   import.meta.env.MODE === 'development'
     ? 'http://localhost:5000/api'
-    : 'https://ceramicflow.onrender.com/api';
+    : import.meta.env.VITE_API_BASE_URL;
 
 // Configure axios defaults
 axios.defaults.baseURL = API_BASE_URL;

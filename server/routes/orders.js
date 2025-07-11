@@ -2,29 +2,25 @@ import express from 'express';
 import Order from '../models/Order.js';
 import { authenticate } from '../middleware/auth.js';
 import Product from '../models/Product.js';
+import Counter from '../models/Counter.js';
 
 const router = express.Router();
 
 // Create order
 router.post('/', authenticate, async (req, res) => {
   try {
-    // توليد جزء التاريخ
+    // جلب وزيادة رقم الطلب المتسلسل العالمي
+    const counter = await Counter.findOneAndUpdate(
+      { _id: 'orderNumber' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    const serial = counter.seq;
+    // توليد بادئة التاريخ
     const today = new Date();
     const dateStr = today.toISOString().slice(0,10).replace(/-/g, ''); // YYYYMMDD
-    // جلب آخر طلب لنفس المستودع في نفس اليوم
-    const lastOrder = await Order.findOne({
-      warehouse: req.body.warehouse,
-      orderNumber: { $regex: `^${dateStr}-` }
-    }).sort({ orderNumber: -1 });
-    let serial = 1;
-    if (lastOrder) {
-      const lastSerial = parseInt(lastOrder.orderNumber.split('-')[1], 10);
-      if (!isNaN(lastSerial)) {
-        serial = lastSerial + 1;
-      }
-    }
-    // توليد orderNumber الجديد: تاريخ اليوم + تسلسل خاص
-    const orderNumber = `${dateStr}-${serial.toString().padStart(4, '0')}`;
+    // رقم الطلب النهائي
+    const orderNumber = `${dateStr}-${serial.toString().padStart(5, '0')}`;
 
     // معالجة المنتجات
     if (!Array.isArray(req.body.products) || req.body.products.length === 0) {
