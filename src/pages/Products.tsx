@@ -370,7 +370,7 @@ const Products: React.FC = () => {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mt-3 mb-6">
         <div className="flex items-center flex-wrap gap-2 justify-between">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <Autocomplete
               options={categoryOptions}
               getOptionLabel={option => option.label}
@@ -518,23 +518,23 @@ const Products: React.FC = () => {
                           {material.sku || material.code}
                         </span>
                       </td>
-                      <td className={`px-2 py-4 whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'} relative`}> 
-                        {material.hasOffer && (
-                          <div className="absolute top-1 right-0 z-10">
-                            <img
-                              src="https://img.icons8.com/color/96/discount--v1.png"
-                              alt="عرض خاص"
-                              title="عرض خاص"
-                              className="w-7 h-7"
-                            />
-                          </div>
-                        )}
-                        <div className="h-12 w-12 rounded-lg bg-gray-100 overflow-hidden cursor-pointer group" onClick={() => {
+                      <td className={`px-2 py-4 whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'}`}> 
+                        <div className="h-12 w-12 rounded-lg bg-gray-100 cursor-pointer group relative" onClick={() => {
                           if (material.image) {
                             setDialogImageUrl(material.image.startsWith('http') ? material.image : `http://localhost:5000${material.image}`);
                             setShowImageDialog(true);
                           }
                         }}>
+                          {material.hasOffer && (
+                            <div className="absolute -top-2 -right-2 z-10">
+                              <img
+                                src="https://img.icons8.com/color/96/discount--v1.png"
+                                alt="عرض خاص"
+                                title="عرض خاص"
+                                className="w-7 h-7"
+                              />
+                            </div>
+                          )}
                           {material.image ? (
                             <img
                               src={material.image.startsWith('http') ? material.image : `http://localhost:5000${material.image}`}

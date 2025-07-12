@@ -473,7 +473,32 @@
     "city": "City",
     "state": "State",
     "zipCode": "Zip Code",
-    "country": "Country"
+    "country": "Country",
+    "fromDate": "From Date",
+    "toDate": "To Date"
   },
-  "taxNumber": "Tax Number"
+  "invoice": {
+    "title": "Invoice",
+    "number": "Invoice",
+    "date": "Date Issues",
+    "dueDate": "Due Date",
+    "to": "Invoice To",
+    "from": "From",
+    "cr": "CR",
+    "taxNumber": "Tax Number",
+    "note": "Note:",
+    "bankDetails": "Bank Details",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "total": "Total",
+    "item": "Items",
+    "description": "Description",
+    "price": "Price",
+    "qty": "Qty",
+    "address": "Address",
+    "totalDue": "Total Due",
+    "billTo": "Bill To",
+    "totalDue": "Total Due",
+    "showInvoice": "Show Invoice"
+  }
 }

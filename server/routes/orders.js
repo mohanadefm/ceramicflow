@@ -75,9 +75,25 @@ router.get('/', authenticate, async (req, res) => {
     if (req.query.orderNumber) {
       filter.orderNumber = { $regex: req.query.orderNumber, $options: 'i' };
     }
+    // دعم فلترة حسب العميل
+    if (req.query.customer) {
+      filter.customer = req.query.customer;
+    }
+    // دعم فلترة التاريخ
+    if (req.query.startDate || req.query.endDate) {
+      filter.createdAt = {};
+      if (req.query.startDate) {
+        filter.createdAt.$gte = new Date(req.query.startDate);
+      }
+      if (req.query.endDate) {
+        const endDate = new Date(req.query.endDate);
+        endDate.setDate(endDate.getDate() + 1);
+        filter.createdAt.$lt = endDate;
+      }
+    }
 
     const orders = await Order.find(filter)
-      .populate('customer', 'name email phone photo')
+      .populate('customer', 'name email phone photo address')
       .populate('products.product', 'name sku image category hasOffer offerPrice items_per_box length width price')
       .populate('warehouse', 'name')
       .sort({ createdAt: -1 })
@@ -109,7 +125,7 @@ router.get('/warehouse/:warehouseId', authenticate, async (req, res) => {
     const skip = (page - 1) * limit;
 
     const orders = await Order.find({ warehouse: req.params.warehouseId })
-      .populate('customer', 'name email phone photo')
+      .populate('customer', 'name email phone photo address')
       .populate('products.product', 'name sku image category hasOffer offerPrice items_per_box length width price')
       .populate('warehouse', 'name')
       .sort({ createdAt: -1 })
@@ -141,7 +157,7 @@ router.get('/customer/:customerId', authenticate, async (req, res) => {
     const skip = (page - 1) * limit;
 
     const orders = await Order.find({ customer: req.params.customerId })
-      .populate('customer', 'name email phone photo')
+      .populate('customer', 'name email phone photo address')
       .populate('products.product', 'name sku image category hasOffer offerPrice items_per_box length width price')
       .populate('warehouse', 'name')
       .sort({ createdAt: -1 })
@@ -169,7 +185,7 @@ router.get('/customer/:customerId', authenticate, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate('customer', 'name email phone photo')
+      .populate('customer', 'name email phone photo address')
       .populate('products.product', 'name sku image category hasOffer offerPrice items_per_box length width price')
       .populate('warehouse', 'name');
     
@@ -223,7 +239,7 @@ router.put('/:id', authenticate, async (req, res) => {
       req.params.id,
       req.body,
       { new: true, runValidators: true }
-    ).populate('customer', 'name email phone photo')
+    ).populate('customer', 'name email phone photo address')
      .populate('warehouse', 'name');
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -307,7 +323,7 @@ router.get('/warehouse/:warehouseId/statistics', authenticate, async (req, res) 
     // اجلب كل الطلبات لهذا المستودع
     const orders = await Order.find({ warehouse: warehouseId })
       .populate('products.product', 'category type color country')
-      .populate('customer', 'name country');
+      .populate('customer', 'name email phone photo address');
 
     // فلترة الطلبات المؤكدة أو المسلمة أو المشحونة
     const confirmedOrders = orders.filter(o => ['confirmed', 'delivered', 'shipped'].includes(o.status));

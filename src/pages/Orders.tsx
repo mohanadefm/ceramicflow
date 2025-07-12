@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit, Trash2, ShoppingCart, Package, User, Calendar, X } from 'lucide-react';
+import { Plus, Edit, Trash2, ShoppingCart, Package, User, Calendar, X, FileText } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Drawer from '@mui/material/Drawer';
@@ -20,6 +20,7 @@ interface Order {
     phone: string;
     image?: string;
     photo?: string;
+    address?: string; // Added address to customer interface
   };
   product: {
     _id: string;
@@ -87,6 +88,9 @@ interface OrderProductForm {
   unitPrice: number;
 }
 
+// عرّف نوع العميل للفلتر
+interface ClientOption { _id: string; name: string; }
+
 const Orders: React.FC = () => {
   const { t, isRTL } = useLanguage();
   const { user } = useAuth();
@@ -99,12 +103,20 @@ const Orders: React.FC = () => {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [customers, setCustomers] = useState([]);
+  const [customers, setCustomers] = useState<ClientOption[]>([]);
   const [products, setProducts] = useState([]);
   const [editingCell, setEditingCell] = useState<{orderId: string, field: 'status' | 'payment'} | null>(null);
   const [updatingCell, setUpdatingCell] = useState(false);
   const [searchOrder, setSearchOrder] = useState('');
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [customerFilter, setCustomerFilter] = useState('');
+  const areFiltersActive = !!(startDate || endDate || customerFilter);
+  const fromDateRef = useRef<HTMLInputElement>(null);
+  const toDateRef = useRef<HTMLInputElement>(null);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -119,12 +131,15 @@ const Orders: React.FC = () => {
       fetchCustomers();
       fetchProducts();
     }
-  }, [user, page, searchOrder]);
+  }, [user, page, searchOrder, startDate, endDate, customerFilter]);
 
   const fetchOrders = async (searchValue?: string) => {
     try {
       const params: any = { page, limit };
       if (searchValue) params.orderNumber = searchValue;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+      if (customerFilter) params.customer = customerFilter;
       const response = await axios.get('/orders', { params });
       setOrders(response.data.orders);
       setTotalPages(Math.ceil((response.data.count || 1) / limit));
@@ -257,7 +272,7 @@ const Orders: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 rtl:space-x-reverse">
@@ -304,6 +319,105 @@ const Orders: React.FC = () => {
         </div>
       </div>
 
+      {/* قسم الفلاتر: */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mt-3 mb-6">
+        <div className="flex items-center flex-wrap gap-2 justify-between">
+          <div className="flex items-center gap-3 flex-wrap">
+           
+            <TextField
+              type="date"
+              label={t('orders.fromDate') || 'من تاريخ'}
+              placeholder={t('orders.fromDate') || 'من تاريخ'}
+              value={startDate}
+              onChange={e => {
+                setStartDate(e.target.value);
+                setPage(1);
+              }}
+              size="small"
+              InputLabelProps={{ shrink: true }}
+              sx={{ minWidth: 200 }}
+              inputRef={fromDateRef}
+              onClick={() => {
+                if (fromDateRef.current) {
+                  fromDateRef.current.showPicker?.();
+                  fromDateRef.current.focus();
+                }
+              }}
+            />
+            <TextField
+              type="date"
+              label={t('orders.toDate') || 'إلى تاريخ'}
+              placeholder={t('orders.toDate') || 'إلى تاريخ'}
+              value={endDate}
+              onChange={e => {
+                setEndDate(e.target.value);
+                setPage(1);
+              }}
+              size="small"
+              InputLabelProps={{ shrink: true }}
+              sx={{ minWidth: 200 }}
+              inputProps={{ min: startDate || undefined }}
+              inputRef={toDateRef}
+              onClick={() => {
+                if (toDateRef.current) {
+                  toDateRef.current.showPicker?.();
+                  toDateRef.current.focus();
+                }
+              }}
+            />
+
+<Autocomplete
+              options={customers}
+              getOptionLabel={(option: ClientOption) => option.name || ''}
+              isOptionEqualToValue={(option: ClientOption, value: ClientOption) => option._id === value._id}
+              value={customers.find((c: ClientOption) => c._id === customerFilter) || null}
+              onChange={(_, value: ClientOption | null) => {
+                setCustomerFilter(value ? value._id : '');
+                setPage(1);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t('orders.customer') || 'العميل'}
+                  placeholder={t('orders.customer') || 'العميل'}
+                  size="small"
+                  sx={{ minWidth: 200 }}
+                />
+              )}
+              openOnFocus
+              clearOnEscape
+              filterOptions={(options, state) =>
+                options.filter(option =>
+                  option.name.toLowerCase().includes(state.inputValue.toLowerCase())
+                )
+              }
+              autoHighlight
+              onBlur={() => {
+                if (!customers.find(c => c._id === customerFilter)) {
+                  setCustomerFilter('');
+                }
+              }}
+              freeSolo={false}
+            />
+          </div>
+          <div className={`${isRTL ? 'mr-auto' : 'ml-auto'}`}>
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+                setCustomerFilter('');
+                setPage(1);
+              }}
+              className="px-3 py-1 rounded bg-gray-100 border border-gray-300 text-gray-700 transition-colors text-sm disabled:opacity-50 disabled:hover:bg-gray-100 hover:bg-gray-200"
+              disabled={!areFiltersActive}
+            >
+              {t('common.resetFilters') || 'إعادة تعيين الفلاتر'}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           {orders.length === 0 ? (
@@ -337,10 +451,10 @@ const Orders: React.FC = () => {
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
                     {t('orders.totalSum') || 'Total Sum'}
                   </th>
-                  <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+                  <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[115px]`}>
                     {t('orders.status') || 'Status'}
                   </th>
-                  <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+                  <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]`}>
                     {t('orders.payment') || 'Payment'}
                   </th>
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
@@ -455,8 +569,8 @@ const Orders: React.FC = () => {
                         </select>
                       ) : (
                         <span
-                          className={`px-2 py-1 text-xs font-medium rounded-md${order.status !== 'confirmed' ? ' cursor-pointer' : ''} ${getStatusColor(order.status)}`}
-                          onClick={order.status !== 'confirmed' ? () => handleCellClick(order._id, 'status') : undefined}
+                          className={`px-2 py-1 text-xs font-medium rounded-md${order.status !== 'confirmed' && order.status !== 'cancelled' ? ' cursor-pointer' : ''} ${getStatusColor(order.status)}`}
+                          onClick={order.status !== 'confirmed' && order.status !== 'cancelled' ? () => handleCellClick(order._id, 'status') : undefined}
                           tabIndex={0}
                           style={{ outline: 'none' }}
                         >
@@ -480,12 +594,12 @@ const Orders: React.FC = () => {
                         </select>
                       ) : (
                         <span
-                          className={`px-2 py-1 text-xs font-medium rounded-md${order.payment !== 'paid' ? ' cursor-pointer' : ''} ${getPaymentColor(order.payment)}`}
-                          onClick={order.payment !== 'paid' ? () => handleCellClick(order._id, 'payment') : undefined}
+                          className={`px-2 py-1 text-xs font-medium rounded-md${order.payment !== 'paid' && order.payment !== 'cancelled' ? ' cursor-pointer' : ''} ${getPaymentColor(order.payment)}`}
+                          onClick={order.payment !== 'paid' && order.payment !== 'cancelled' ? () => handleCellClick(order._id, 'payment') : undefined}
                           tabIndex={0}
                           style={{ outline: 'none' }}
                         >
-                          {t(`orders.${order.payment}`) || t('orders.paymentPending') || 'Pending'}
+                          {order.payment === 'cancelled' ? (t('orders.paymentCancelled') || 'Cancelled') : (t(`orders.${order.payment}`) || t('orders.paymentPending') || 'Pending')}
                         </span>
                       )}
                     </td>
@@ -516,6 +630,15 @@ const Orders: React.FC = () => {
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
+                        {order.status === 'confirmed' && (
+                          <button
+                            className="text-green-600 hover:text-green-900 transition-colors duration-200"
+                            title={t('invoice.showInvoice') || 'عرض الفاتورة'}
+                            onClick={() => { setInvoiceOrder(order); setShowInvoice(true); }}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -628,6 +751,11 @@ const Orders: React.FC = () => {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Dialog عرض الفاتورة */}
+      {showInvoice && (
+        <InvoiceDialog open={showInvoice} onClose={() => setShowInvoice(false)} order={invoiceOrder} user={user} />
       )}
     </div>
   );
@@ -919,6 +1047,123 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
         </form>
       </div>
     </Drawer>
+  );
+};
+
+// Dialog عرض الفاتورة
+const InvoiceDialog: React.FC<{ open: boolean; onClose: () => void; order: Order | null; user: any; }> = ({ open, onClose, order, user }) => {
+  const { t, isRTL } = useLanguage();
+  if (!open || !order || !user) return null;
+
+  // حساب الإجمالي
+  const subtotal = order.products?.reduce((sum: number, p: any) => sum + Number(p.totalPrice), 0) || 0;
+  // مثال: خصم أو ضريبة (يمكنك تعديلها حسب الحاجة)
+  const discount = 0;
+  const taxPercent = 0;
+  const tax = subtotal * (taxPercent / 100);
+  const total = subtotal - discount + tax;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-30">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl relative overflow-hidden">
+        <button className="absolute top-4 left-4 text-gray-400 hover:text-red-500" onClick={onClose}><X /></button>
+        {/* رأس الفاتورة */}
+        <div className="flex items-center justify-between bg-gray-50 px-8 py-6 border-b">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 rounded bg-white flex items-center justify-center overflow-hidden border">
+              {user.photo ? (
+                <img src={user.photo.startsWith('http') ? user.photo : `http://localhost:5000${user.photo}`} alt={user.name} className="h-full w-full object-cover" />
+              ) : (
+                <Package className="h-8 w-8 text-blue-600" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">{user.name}</h2>
+              <div className="text-gray-600 text-sm">{user.address}</div>
+              <div className="text-gray-600 text-sm"> {user.phone}</div>
+              <div className="text-gray-600 text-sm">{user.email} </div>
+              <div className="text-gray-600 text-sm">{user.commercialRecord && <>{t('invoice.cr')}: {user.commercialRecord}</>}</div>
+              <div className="text-gray-600 text-sm">{user.taxNumber && <>{t('invoice.taxNumber')}: {user.taxNumber}</>}</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-lg font-semibold text-gray-700">{t('invoice.number')} <span className="font-bold">{'#'+order.orderNumber}</span></div>
+            <div className="text-gray-500 text-sm">{t('invoice.date')}: {new Date(order.createdAt).toLocaleDateString()}</div>
+          </div>
+        </div>
+        {/* معلومات الطرفين */}
+        <div className="flex flex-wrap gap-8 px-8 py-6 border-b bg-white">
+          <div className="min-w-[220px]">
+            <div className="font-bold text-gray-700 mb-1">{t('invoice.to')}</div>
+            <div className="text-gray-800 font-medium">{order.customer?.name}</div>
+            <div className="text-gray-600 text-sm">{order.customer?.phone}</div>
+            <div className="text-gray-600 text-sm">{order.customer?.email}</div>
+            <div className="text-gray-600 text-sm">{order.customer?.address}</div>
+          </div>
+          {/* <div className="min-w-[220px]">
+            <div className="font-bold text-gray-700 mb-1">{t('invoice.address')}</div>
+            <div className="text-gray-600 text-sm">
+              {order.customer?.address ? order.customer.address : '-'}
+            </div>
+          </div> */}
+          {/* <div className="min-w-[220px] ml-auto">
+            <div className="font-bold text-gray-700 mb-1">{t('invoice.billTo') || 'Bill To:'}</div>
+            <div className="text-gray-600 text-sm mt-1">
+              <div className="font-bold mb-1">{t('invoice.totalDue') || 'Total Due:'}</div>
+              <span className="font-bold">{total.toFixed(2)}</span>
+            </div>
+            {user.accountNumbers && user.accountNumbers.length > 0 && (
+              <div className="text-gray-600 text-sm mt-1">
+                <div className="font-bold mb-1">{t('invoice.bankDetails')}</div>
+                {user.accountNumbers.map((acc: string, idx: number) => (
+                  <div key={idx}>{acc}</div>
+                ))}
+              </div>
+            )}
+          </div> */}
+        </div>
+        {/* جدول المنتجات */}
+        <div className="px-8 py-6">
+          <table className="min-w-full border rounded-lg overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+            <thead>
+              <tr className="bg-gray-50 border-b">
+                <th className={`px-3 py-2 text-xs text-gray-500 font-semibold ${isRTL ? 'text-right' : 'text-left'}`}>{t('invoice.item')}</th>
+                <th className={`px-3 py-2 text-xs text-gray-500 font-semibold ${isRTL ? 'text-right' : 'text-left'}`}>{t('invoice.description')}</th>
+                <th className="px-3 py-2 text-xs text-gray-500 font-semibold text-center">{t('invoice.price')}</th>
+                <th className="px-3 py-2 text-xs text-gray-500 font-semibold text-center">{t('invoice.qty')}</th>
+                <th className="px-3 py-2 text-xs text-gray-500 font-semibold text-center">{t('invoice.total')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {order.products?.map((p: any, idx: number) => (
+                <tr key={idx} className="border-b last:border-b-0 hover:bg-gray-50">
+                  <td className="px-3 py-2 text-sm text-gray-900">{p.product?.name || p.sku}</td>
+                  <td className={`px-3 py-2 text-sm text-gray-600 ${isRTL ? 'text-right' : 'text-left'}`}>
+  {p.product?.category
+    ? `${isRTL ? t(`productTypes.${p.product.category}`) || p.product.category : p.product.category}${p.product.length && p.product.width ? ` ( ${p.product.length} x ${p.product.width} ${isRTL ? 'سم' : 'cm'} )` : ''}`
+    : '-'}
+</td>
+                  <td className="px-3 py-2 text-sm text-center">{Number(p.unitPrice).toFixed(2)}</td>
+                  <td className="px-3 py-2 text-sm text-center">{p.quantity}</td>
+                  <td className="px-3 py-2 text-sm text-center">{Number(p.totalPrice).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* ملخص الفاتورة */}
+        <div className="flex flex-col items-end gap-1 px-8 pb-4">
+          <div className="flex gap-8">
+            {/* <div className="text-gray-700 min-w-[120px] flex justify-between"><span>{t('invoice.subtotal') || 'Subtotal:'}</span> <span className="font-bold">{subtotal.toFixed(2)}</span></div> */}
+            {discount > 0 && <div className="text-gray-700 min-w-[120px] flex justify-between"><span>{t('invoice.discount') || 'Discount:'}</span> <span className="font-bold">{discount.toFixed(2)}</span></div>}
+            {taxPercent > 0 && <div className="text-gray-700 min-w-[120px] flex justify-between"><span>{t('invoice.tax') || 'Tax:'}</span> <span className="font-bold">{taxPercent}%</span></div>}
+            <div className="text-gray-900 font-bold min-w-[120px] flex justify-between"><span>{t('invoice.total') || 'Total:'}</span> <span>{total.toFixed(2)}</span></div>
+          </div>
+        </div>
+        {/* ملاحظة ختامية */}
+        <div className="px-8 pb-6 pt-2 text-xs text-gray-500 border-t">{t('invoice.note')}</div>
+      </div>
+    </div>
   );
 };
 
