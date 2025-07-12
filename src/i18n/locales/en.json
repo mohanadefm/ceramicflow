@@ -130,6 +130,7 @@
     "emailPlaceholder": "Enter email"
   },
   "material": {
+    "itemsPricePerBox": "Items/Price (Box)",
     "offersOnly": "Offers Only",
     "lowStockOnly": "Low Stock Only",
     "selectCategory": "Select Category",

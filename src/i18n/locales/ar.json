@@ -129,6 +129,7 @@
     "emailPlaceholder": "أدخل البريد الإلكتروني"
   },
   "material": {
+    "itemsPricePerBox": "عدد القطع/السعر (صندوق)",
     "offersOnly": "العروض",
     "lowStockOnly": "المخزون المنخفض",
     "selectCategory": "اختر التصنيف",

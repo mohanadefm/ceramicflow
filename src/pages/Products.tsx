@@ -500,7 +500,9 @@ const Products: React.FC = () => {
                     <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('material.price')}</th>
                     <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('material.quantityInMeters')}</th>
                     <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('material.quantityInBoxes')}</th>
-                    <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('material.itemsPerBox')}</th>
+                    <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+                      {t('material.itemsPricePerBox')} {/* old: Items per box */}
+                    </th>
                     <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('material.factory')}</th>
                     <th className={`px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('warehouse.actions')}</th>
                   </tr>
@@ -516,7 +518,7 @@ const Products: React.FC = () => {
                           {material.sku || material.code}
                         </span>
                       </td>
-                      <td className={`px-2 py-4 whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'} relative justify-items-center`}> 
+                      <td className={`px-2 py-4 whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'} relative`}> 
                         {material.hasOffer && (
                           <div className="absolute top-1 right-0 z-10">
                             <img
@@ -561,7 +563,20 @@ const Products: React.FC = () => {
                       <td className={`px-2 py-4 whitespace-nowrap text-sm ${material.status !== 'active' ? 'text-gray-400' : 'text-gray-900'} ${isRTL ? 'text-right' : 'text-left'}`}>
                         {material.quantityInBoxes !== undefined ? material.quantityInBoxes : (material.quantity_box !== undefined ? material.quantity_box : '-')}
                       </td>
-                      <td className={`px-2 py-4 whitespace-nowrap text-sm ${material.status !== 'active' ? 'text-gray-400' : 'text-gray-900'} ${isRTL ? 'text-right' : 'text-left'}`}>{material.items_per_box !== undefined ? material.items_per_box : '-'}</td>
+                      <td className={`px-2 py-4 whitespace-nowrap text-sm ${material.status !== 'active' ? 'text-gray-400' : 'text-gray-900'} ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {/* حساب وعرض (Items/price) per box */}
+                        {(() => {
+                          const itemsPerBox = material.items_per_box;
+                          const length = Number(material.length) || 0;
+                          const width = Number(material.width) || 0;
+                          const price = Number(material.price) || 0;
+                          let calculatedPrice = '-';
+                          if (itemsPerBox && length && width && price) {
+                            calculatedPrice = (length * width * price * itemsPerBox / 10000).toFixed(2);
+                          }
+                          return `${itemsPerBox ?? '-'} / ${calculatedPrice}`;
+                        })()}
+                      </td>
                       <td className={`px-2 py-4 whitespace-nowrap text-sm ${material.status !== 'active' ? 'text-gray-400' : 'text-gray-900'} ${isRTL ? 'text-right' : 'text-left'}`}>{material.factory || '-'}</td>
                       <td className="px-2 py-4 whitespace-nowrap text-center">
                         <Switch
