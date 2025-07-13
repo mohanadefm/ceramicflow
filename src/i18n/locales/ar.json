@@ -1,5 +1,7 @@
 {
   "common": {
+    "currency": "ر.س",
+    "filters": "الفلاتر",
     "showing": "عرض",
     "to": "إلى",
     "of": "من",
@@ -62,6 +64,8 @@
     "recentActivity": "النشاط الأخير"
   },
   "warehouse": {
+    "totalProducts": "إجمالي المنتجات",
+    "items": "العناصر",
     "m2": "م²",
     "selectWarehouse": "اختر المستودع",
     "searchByCode": "البحث بالكود",
@@ -71,10 +75,10 @@
     "inventory": "المخزون",
     "materials": "المواد",
     "products": "المنتجات",
-    "addMaterial": "إضافة مادة",
-    "editMaterial": "تعديل المادة",
-    "deleteMaterial": "حذف المادة",
-    "materialDetails": "تفاصيل المادة",
+    "addMaterial": "إضافة منتج",
+    "editMaterial": "تعديل المنتج",
+    "deleteMaterial": "حذف المنتج",
+    "materialDetails": "تفاصيل المنتج",
     "notFound": "هذا النوع غير متوفر في مخزون هذا المستودع.",
     "lowStock": "مخزون منخفض",
     "totalQuantityM2": "إجمالي الكمية",
@@ -141,7 +145,7 @@
     "class": "الفئة",
     "code": "الكود",
     "color": "اللون",
-    "dimension": "الأبعاد",
+    "dimension": "المقاس",
     "depth": "العمق",
     "quantityM2": "الكمية (م²)",
     "itemsPerBox": "عدد القطع في الصندوق",
@@ -181,6 +185,7 @@
     "description": "الوصف",
     "status": "الحالة",
     "product": "المنتج",
+    "originalPrice": "السعر الأصلي",
     "Stone": "حجر",
     "Ceramic": "سيراميك",
     "Porcelain": "بورسلان",
@@ -188,6 +193,12 @@
     "noProducts": "لا يوجد منتجات",
     "categories": {
       "selectCategory": "اختر التصنيف",
+      "ceramic": "سيراميك",
+      "porcelain": "بورسلان",
+      "marble": "رخام",
+      "stone": "حجر"
+    },
+    "categoryLabels": {
       "ceramic": "سيراميك",
       "porcelain": "بورسلان",
       "marble": "رخام",
@@ -357,7 +368,7 @@
   },
   "dialog": {
     "deletetitle": "تأكيد الحذف",
-    "deletemessage": "هل أنت متأكد أنك تريد حذف هذه المادة؟",
+    "deletemessage": "هل أنت متأكد أنك تريد حذف هذا المنتج؟",
     "deleteClientMessage": "هل أنت متأكد أنك تريد حذف هذا العميل؟",
     "cancel": "إلغاء",
     "delete": "حذف",
@@ -478,6 +489,8 @@
     "toDate": "إلى تاريخ"
   },
   "invoice": {
+    "notes":"الملاحظات",
+    "shippingAddress":"عنوان الشحن",
     "title": "الفاتورة",
     "number": "رقم الفاتورة",
     "date": "تاريخ الفاتورة",

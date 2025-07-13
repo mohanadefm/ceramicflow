@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit, Trash2, ShoppingCart, Package, User, Calendar, X, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, ShoppingCart, Package, User, Calendar, X, FileText, Filter } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Drawer from '@mui/material/Drawer';
@@ -117,6 +117,7 @@ const Orders: React.FC = () => {
   const toDateRef = useRef<HTMLInputElement>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
+  const [showFilters, setShowFilters] = useState(false); // <-- حالة إظهار الفلاتر
 
   useEffect(() => {
     if (user) {
@@ -309,6 +310,15 @@ const Orders: React.FC = () => {
               )}
             </div>
             <button
+              type="button"
+              onClick={() => setShowFilters(prev => !prev)}
+              className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 flex items-center"
+              style={{ minWidth: 0 }}
+            >
+              <Filter className="w-5 h-5" />
+              <span className="mx-2">{t('common.filters') || 'فلاتر'}</span>
+            </button>
+            <button
               onClick={handleAddOrder}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2 rtl:space-x-reverse"
             >
@@ -320,105 +330,107 @@ const Orders: React.FC = () => {
       </div>
 
       {/* قسم الفلاتر: */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mt-3 mb-6">
-        <div className="flex items-center flex-wrap gap-2 justify-between">
-          <div className="flex items-center gap-3 flex-wrap">
-           
-            <TextField
-              type="date"
-              label={t('orders.fromDate') || 'من تاريخ'}
-              placeholder={t('orders.fromDate') || 'من تاريخ'}
-              value={startDate}
-              onChange={e => {
-                setStartDate(e.target.value);
-                setPage(1);
-              }}
-              size="small"
-              InputLabelProps={{ shrink: true }}
-              sx={{ minWidth: 200 }}
-              inputRef={fromDateRef}
-              onClick={() => {
-                if (fromDateRef.current) {
-                  fromDateRef.current.showPicker?.();
-                  fromDateRef.current.focus();
+      {showFilters && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mt-3 mb-6">
+          <div className="flex items-center flex-wrap gap-2 justify-between">
+            <div className="flex items-center gap-3 flex-wrap">
+              <TextField
+                type="date"
+                label={t('orders.fromDate') || 'من تاريخ'}
+                placeholder={t('orders.fromDate') || 'من تاريخ'}
+                value={startDate}
+                onChange={e => {
+                  setStartDate(e.target.value);
+                  setPage(1);
+                }}
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                sx={{ minWidth: 200 }}
+                inputRef={fromDateRef}
+                inputProps={{ style: { direction: isRTL ? 'rtl' : 'ltr', textAlign: isRTL ? 'right' : 'left' } }}
+                onClick={() => {
+                  if (fromDateRef.current) {
+                    fromDateRef.current.showPicker?.();
+                    fromDateRef.current.focus();
+                  }
+                }}
+              />
+              <TextField
+                type="date"
+                label={t('orders.toDate') || 'إلى تاريخ'}
+                placeholder={t('orders.toDate') || 'إلى تاريخ'}
+                value={endDate}
+                onChange={e => {
+                  setEndDate(e.target.value);
+                  setPage(1);
+                }}
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                sx={{ minWidth: 200 }}
+                inputProps={{ min: startDate || undefined, style: { direction: isRTL ? 'rtl' : 'ltr', textAlign: isRTL ? 'right' : 'left' } }}
+                inputRef={toDateRef}
+                onClick={() => {
+                  if (toDateRef.current) {
+                    toDateRef.current.showPicker?.();
+                    toDateRef.current.focus();
+                  }
+                }}
+              />
+              <Autocomplete
+                options={customers}
+                getOptionLabel={(option: ClientOption) => option.name || ''}
+                isOptionEqualToValue={(option: ClientOption, value: ClientOption) => option._id === value._id}
+                value={customers.find((c: ClientOption) => c._id === customerFilter) || null}
+                onChange={(_, value: ClientOption | null) => {
+                  setCustomerFilter(value ? value._id : '');
+                  setPage(1);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    // label={t('orders.customer') || 'العميل'}
+                    placeholder={t('orders.customer') || 'العميل'}
+                    size="small"
+                    sx={{ minWidth: 200 }}
+                  />
+                )}
+                openOnFocus
+                clearOnEscape
+                filterOptions={(options, state) =>
+                  options.filter(option =>
+                    option.name.toLowerCase().includes(state.inputValue.toLowerCase())
+                  )
                 }
-              }}
-            />
-            <TextField
-              type="date"
-              label={t('orders.toDate') || 'إلى تاريخ'}
-              placeholder={t('orders.toDate') || 'إلى تاريخ'}
-              value={endDate}
-              onChange={e => {
-                setEndDate(e.target.value);
-                setPage(1);
-              }}
-              size="small"
-              InputLabelProps={{ shrink: true }}
-              sx={{ minWidth: 200 }}
-              inputProps={{ min: startDate || undefined }}
-              inputRef={toDateRef}
-              onClick={() => {
-                if (toDateRef.current) {
-                  toDateRef.current.showPicker?.();
-                  toDateRef.current.focus();
-                }
-              }}
-            />
-
-<Autocomplete
-              options={customers}
-              getOptionLabel={(option: ClientOption) => option.name || ''}
-              isOptionEqualToValue={(option: ClientOption, value: ClientOption) => option._id === value._id}
-              value={customers.find((c: ClientOption) => c._id === customerFilter) || null}
-              onChange={(_, value: ClientOption | null) => {
-                setCustomerFilter(value ? value._id : '');
-                setPage(1);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label={t('orders.customer') || 'العميل'}
-                  placeholder={t('orders.customer') || 'العميل'}
-                  size="small"
-                  sx={{ minWidth: 200 }}
-                />
-              )}
-              openOnFocus
-              clearOnEscape
-              filterOptions={(options, state) =>
-                options.filter(option =>
-                  option.name.toLowerCase().includes(state.inputValue.toLowerCase())
-                )
-              }
-              autoHighlight
-              onBlur={() => {
-                if (!customers.find(c => c._id === customerFilter)) {
+                autoHighlight
+                onBlur={() => {
+                  if (!customers.find(c => c._id === customerFilter)) {
+                    setCustomerFilter('');
+                  }
+                }}
+                freeSolo={false}
+                dir={isRTL ? 'rtl' : 'ltr'}
+              />
+            </div>
+            <div className={`${isRTL ? 'mr-auto' : 'ml-auto'}`}>
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
                   setCustomerFilter('');
-                }
-              }}
-              freeSolo={false}
-            />
-          </div>
-          <div className={`${isRTL ? 'mr-auto' : 'ml-auto'}`}>
-            <button
-              type="button"
-              onClick={() => {
-                setStartDate('');
-                setEndDate('');
-                setCustomerFilter('');
-                setPage(1);
-              }}
-              className="px-3 py-1 rounded bg-gray-100 border border-gray-300 text-gray-700 transition-colors text-sm disabled:opacity-50 disabled:hover:bg-gray-100 hover:bg-gray-200"
-              disabled={!areFiltersActive}
-            >
-              {t('common.resetFilters') || 'إعادة تعيين الفلاتر'}
-            </button>
+                  setPage(1);
+                }}
+                className="px-3 py-1 rounded bg-gray-100 border border-gray-300 text-gray-700 transition-colors text-sm disabled:opacity-50 disabled:hover:bg-gray-100 hover:bg-gray-200"
+                disabled={!areFiltersActive}
+              >
+                {t('common.resetFilters') || 'إعادة تعيين الفلاتر'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-6">
         <div className="overflow-x-auto">
           {orders.length === 0 ? (
             <div className="text-center py-12">
@@ -619,8 +631,9 @@ const Orders: React.FC = () => {
                     <td className="px-2 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse">
                         <button 
-                          className="text-blue-600 hover:text-blue-900 transition-colors duration-200" 
+                          className="text-blue-600 hover:text-blue-900 transition-colors duration-200 disabled:opacity-30"
                           onClick={() => handleEditOrder(order)}
+                          disabled={order.status === 'confirmed' || order.status === 'cancelled'}
                         >
                           <Edit className="h-4 w-4" />
                         </button>
@@ -906,8 +919,8 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
         }
       }}
     >
-      <div className="p-6 h-full overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between p-6 pb-4">
           <h2 className="text-xl font-semibold text-gray-900">
             {order ? (t('orders.editOrder') || 'Edit Order') : (t('orders.addOrder') || 'Add Order')}
           </h2>
@@ -921,7 +934,8 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full px-6">
+          <div className="flex-1 space-y-4 overflow-y-auto">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {t('orders.customer') || 'Customer'}
@@ -972,6 +986,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
                   </div>
                   <div className="w-24">
                     <input
+                      style={{ height: 40 }}
                       type="number"
                       min="1"
                       placeholder={t('orders.quantity') || 'Quantity'}
@@ -984,6 +999,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
                   </div>
                   <div className="w-28">
                     <input
+                      style={{ height: 40 }}
                       type="number"
                       min="0"
                       step="0.01"
@@ -994,11 +1010,11 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
                       required
                     />
                   </div>
-                  <button type="button" onClick={() => handleRemoveProduct(idx)} className="text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
+                  <button style={{ height: 40 }} disabled={formData.products.length === 1} type="button" onClick={() => handleRemoveProduct(idx)} className="text-red-500 hover:text-red-700 disabled:opacity-50"><Trash2 size={18} /></button>
                 </div>
               );
             })}
-            <button type="button" onClick={handleAddProduct} className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+            <button style={{ height: 40 , width: '100%' , marginTop: 10 , marginBottom: 10 }} type="button" disabled={formData.products.length >= 10} onClick={handleAddProduct} className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50">
               {t('orders.addProduct') || 'Add Product'}
             </button>
           </div>
@@ -1034,16 +1050,17 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, customers, products, war
               placeholder={t('orders.notes') || 'Add any notes here...'}
             />
           </div>
+        </div>
 
-          <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4 border-t border-gray-200">
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {saving ? (t('common.saving') || 'Saving...') : (t('common.save') || 'Save')}
-            </button>
-          </div>
+        <div className="py-6 border-t border-gray-200">
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
+          >
+            {saving ? (t('common.saving') || 'Saving...') : (t('common.save') || 'Save')}
+          </button>
+        </div>
         </form>
       </div>
     </Drawer>
@@ -1064,8 +1081,8 @@ const InvoiceDialog: React.FC<{ open: boolean; onClose: () => void; order: Order
   const total = subtotal - discount + tax;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-30">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl relative overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-30" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
         <button className="absolute top-4 left-4 text-gray-400 hover:text-red-500" onClick={onClose}><X /></button>
         {/* رأس الفاتورة */}
         <div className="flex items-center justify-between bg-gray-50 px-8 py-6 border-b">
@@ -1100,12 +1117,20 @@ const InvoiceDialog: React.FC<{ open: boolean; onClose: () => void; order: Order
             <div className="text-gray-600 text-sm">{order.customer?.email}</div>
             <div className="text-gray-600 text-sm">{order.customer?.address}</div>
           </div>
-          {/* <div className="min-w-[220px]">
-            <div className="font-bold text-gray-700 mb-1">{t('invoice.address')}</div>
+
+          <div className="min-w-[220px]">
+            <div className="font-bold text-gray-700 mb-1">{t('invoice.shippingAddress')}</div>
             <div className="text-gray-600 text-sm">
-              {order.customer?.address ? order.customer.address : '-'}
+              {order.shippingAddress?.street ? order.shippingAddress?.street : '-'}
             </div>
-          </div> */}
+          </div>
+
+          <div className="min-w-[220px]">
+            <div className="font-bold text-gray-700 mb-1">{t('invoice.notes')}</div>
+            <div className="text-gray-600 text-sm">
+              {order.notes ? order.notes : '-'}
+            </div>
+          </div>
           {/* <div className="min-w-[220px] ml-auto">
             <div className="font-bold text-gray-700 mb-1">{t('invoice.billTo') || 'Bill To:'}</div>
             <div className="text-gray-600 text-sm mt-1">
@@ -1139,10 +1164,19 @@ const InvoiceDialog: React.FC<{ open: boolean; onClose: () => void; order: Order
                 <tr key={idx} className="border-b last:border-b-0 hover:bg-gray-50">
                   <td className="px-3 py-2 text-sm text-gray-900">{p.product?.name || p.sku}</td>
                   <td className={`px-3 py-2 text-sm text-gray-600 ${isRTL ? 'text-right' : 'text-left'}`}>
-  {p.product?.category
-    ? `${isRTL ? t(`productTypes.${p.product.category}`) || p.product.category : p.product.category}${p.product.length && p.product.width ? ` ( ${p.product.length} x ${p.product.width} ${isRTL ? 'سم' : 'cm'} )` : ''}`
-    : '-'}
-</td>
+                    {p.product?.category ? (
+                      <>
+                        {t(`productTypes.${p.product.category}`) || p.product.category}
+                        {p.product.length && p.product.width && (
+                          <span className="text-gray-500">
+                            {isRTL ? ` (${p.product.length} × ${p.product.width} سم)` : ` (${p.product.length} × ${p.product.width} cm)`}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-sm text-center">{Number(p.unitPrice).toFixed(2)}</td>
                   <td className="px-3 py-2 text-sm text-center">{p.quantity}</td>
                   <td className="px-3 py-2 text-sm text-center">{Number(p.totalPrice).toFixed(2)}</td>

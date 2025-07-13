@@ -1,5 +1,7 @@
 {
-  "common": { 
+  "common": {
+    "currency": "SAR",
+    "filters": "Filters",
     "showing": "Showing",
     "to": "to",
     "of": "of",
@@ -62,6 +64,8 @@
     "recentActivity": "Recent Activity"
   },
   "warehouse": {
+    "totalProducts": "Total Products",
+    "items": "Items",
     "m2": "m²",
     "selectWarehouse": "Select Warehouse",
     "searchByCode": "Search by Code",
@@ -166,6 +170,7 @@
     "description": "Description",
     "status": "Status",
     "product": "Product",
+    "originalPrice": "Original Price",
     "semi-gloss": "Semi-gloss",
     "polished": "Polished",
     "glossy": "Glossy",
@@ -478,6 +483,8 @@
     "toDate": "To Date"
   },
   "invoice": {
+    "notes":"Notes",
+    "shippingAddress":"Shipping Address",
     "title": "Invoice",
     "number": "Invoice",
     "date": "Date Issues",
@@ -500,5 +507,11 @@
     "billTo": "Bill To",
     "totalDue": "Total Due",
     "showInvoice": "Show Invoice"
+  },
+  "productTypes": {
+    "stone": "Stone",
+    "ceramic": "Ceramic",
+    "marble": "Marble",
+    "porcelain": "Porcelain"
   }
 }

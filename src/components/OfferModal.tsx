@@ -235,7 +235,7 @@ const OfferModal: React.FC<OfferModalProps> = ({ offer, onClose, onSave, offers 
   const validatePrice = (value: any, selectedProduct: ProductOption | null) => {
     if (!selectedProduct) return true;
     if (Number(value) >= Number(selectedProduct.price)) {
-      return t('offers.priceLowerThanOriginal');
+      return `${t('offers.priceLowerThanOriginal')} (${t('material.originalPrice')}: ${selectedProduct.price} ${t('common.currency')})`;
     }
     return true;
   };
@@ -255,7 +255,7 @@ const OfferModal: React.FC<OfferModalProps> = ({ offer, onClose, onSave, offers 
       </div>
       <form onSubmit={handleSubmit((data) => {
         onSubmit(data);
-      })} className="flex flex-col flex-1 overflow-y-auto p-6 space-y-6">
+      })} className="flex flex-col flex-1 overflow-y-auto px-3 pt-6 space-y-6">
         {/* Product Autocomplete */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">{t('material.product')} <span className="text-red-500">*</span></label>
@@ -267,12 +267,13 @@ const OfferModal: React.FC<OfferModalProps> = ({ offer, onClose, onSave, offers 
               <Autocomplete
                 options={availableProducts as ProductOption[]}
                 loading={productLoading}
-                getOptionLabel={(option: ProductOption) => option.sku + (option.category ? ` (${option.category})` : '')}
+                getOptionLabel={(option: ProductOption) => option.sku + (option.category ? ` (${t(`material.categoryLabels.${option.category.toLowerCase()}`) || option.category})` : '')}
                 isOptionEqualToValue={(option: ProductOption, value: ProductOption) => option._id === value._id}
                 value={field.value as ProductOption || null}
                 onChange={(_, value) => {
                   field.onChange(value as ProductOption | null);
                   setValue('product', value as ProductOption | null);
+                  setValue('priceAfterDiscount', value?.price || 0);
                   setPriceError(null); // Reset price error on product change
                 }}
                 noOptionsText={t('material.noProducts')}
@@ -288,6 +289,7 @@ const OfferModal: React.FC<OfferModalProps> = ({ offer, onClose, onSave, offers 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">{t('offers.priceAfterDiscount') || 'Price After Discount'} <span className="text-red-500">*</span></label>
           <Controller
+            // disabled={!getValues('product')}
             name="priceAfterDiscount"
             control={control}
             rules={{
@@ -298,7 +300,7 @@ const OfferModal: React.FC<OfferModalProps> = ({ offer, onClose, onSave, offers 
               <>
                 <input
                   type="number"
-                  step="0.01"
+                  step="0.25"
                   {...field}
                   onChange={e => {
                     field.onChange(e);
@@ -329,7 +331,7 @@ const OfferModal: React.FC<OfferModalProps> = ({ offer, onClose, onSave, offers 
         {/* Spacer to push button down */}
         <div className="flex-1" />
         {/* Submit Button */}
-        <div className="mt-auto flex justify-center">
+        <div className="mt-auto flex justify-center pt-6 border-t border-gray-200">
           <button
             type="submit"
             disabled={loading}

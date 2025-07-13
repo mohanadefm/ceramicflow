@@ -158,7 +158,7 @@ const Offers: React.FC = () => {
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>{t('material.sku')}</th>
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>{t('material.image')}</th>
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>{t('material.product')}</th>
-                  <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>Size</th>
+                  <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>{t('material.dimension')}</th>
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>{t('material.price')}</th>
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>{t('offers.priceAfterDiscount')}</th>
                   <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>{t('material.quantityInMeters')}</th>
@@ -213,8 +213,8 @@ const Offers: React.FC = () => {
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'} ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
                       {offer.product && typeof offer.product === 'object' && 'quantityInMeters' in offer.product
-                        ? offer.product.quantityInMeters
-                        : offer.quantityInMeters}
+                        ? offer.product.quantityInMeters?.toFixed(1)
+                        : offer.quantityInMeters.toFixed(1)}
                     </td>
                     <td className={`px-2 py-4 ${isRTL ? 'text-right' : 'text-left'} ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
                       {offer.product && typeof offer.product === 'object' && 'quantityInBoxes' in offer.product
@@ -333,4 +333,4 @@ const Offers: React.FC = () => {
   );
 };
 
-export default Offers; 
+export default Offers;

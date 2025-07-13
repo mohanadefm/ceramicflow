@@ -6,12 +6,12 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  // AlertTriangle, 
-  // BarChart3,
+  AlertTriangle, 
+  BarChart3,
   Image,
-  // Upload,
   X,
-  // Warehouse
+  Filter,
+  Box // <-- أضفنا أيقونة Box
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -58,6 +58,50 @@ interface Material {
   image?: string;
   hasOffer: boolean;
 }
+
+interface Statistics {
+  totalQuantityM2: number;
+  totalQuantityBoxes: number;
+  totalItems: number;
+  lowStockItems: number;
+}
+
+// StatCard component
+const StatCard: React.FC<{
+  title: string;
+  value: string;
+  unit?: string;
+  icon: React.ReactNode;
+  color: 'blue' | 'green' | 'indigo' | 'red' | 'orange';
+}> = ({ title, value, unit, icon, color }) => {
+  const colorBg = {
+    blue: 'bg-blue-50',
+    green: 'bg-green-50',
+    indigo: 'bg-indigo-50',
+    red: 'bg-red-50',
+    orange: 'bg-orange-50',
+  };
+  const colorIcon = {
+    blue: 'text-blue-500',
+    green: 'text-green-500',
+    indigo: 'text-indigo-500',
+    red: 'text-red-500',
+    orange: 'text-orange-500',
+  };
+  return (
+    <div className="rounded-xl bg-white shadow-sm border border-gray-100 px-6 py-5 flex items-center justify-between min-w-[220px]">
+      <div>
+        <div className="text-2xl font-semibold text-gray-900 mb-1 flex items-baseline gap-1">
+          {value} {unit && <span className="text-base text-gray-400 font-normal">{unit}</span>}
+        </div>
+        <div className="text-sm text-gray-500 font-medium">{title}</div>
+      </div>
+      <div className={`flex items-center justify-center w-12 h-12 rounded-full ${colorBg[color]}`}> 
+        {React.cloneElement(icon as React.ReactElement, { className: `w-7 h-7 ${colorIcon[color]}` })}
+      </div>
+    </div>
+  );
+};
 
 // Switch component
 const Switch = ({ checked, onChange, isRTL = false }: { checked: boolean; onChange: (v: boolean) => void; isRTL?: boolean }) => (
@@ -106,6 +150,12 @@ const Products: React.FC = () => {
   const [offersOnly, setOffersOnly] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [dialogImageUrl, setDialogImageUrl] = useState<string | null>(null);
+  const [statistics, setStatistics] = useState<Statistics>({
+    totalQuantityM2: 0,
+    totalQuantityBoxes: 0,
+    totalItems: 0,
+    lowStockItems: 0
+  });
   const categoryOptions = [
     { value: 'ceramic', label: t('material.Ceramic') || 'Ceramic' },
     { value: 'porcelain', label: t('material.Porcelain') || 'Porcelain' },
@@ -219,9 +269,22 @@ const Products: React.FC = () => {
 
   // متغير لتحديد إذا كانت هناك فلاتر مفعلة
   const areFiltersActive = !!(categoryFilter || colorFilter || countryFilter || lowStockOnly || offersOnly);
+  const [showFilters, setShowFilters] = useState(false); // <-- حالة إظهار الفلاتر
+
+  const fetchStatistics = async () => {
+    if (!user) return;
+    try {
+      const response = await axios.get(`/products/warehouse/${user.id}/statistics`);
+      setStatistics(response.data.statistics);
+    } catch (error: any) {
+      console.error('Error fetching statistics:', error);
+      toast.error(t('messages.networkError'));
+    }
+  };
 
   useEffect(() => {
     if (user) {
+      fetchStatistics();
       if (searchCode.trim() !== '') {
         // Debounced search
         if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -295,6 +358,7 @@ const Products: React.FC = () => {
       await axios.delete(`/products/${materialId}`);
       toast.success(t('messages.materialDeleted'));
       fetchMaterials();
+      fetchStatistics();
     } catch (error: any) {
       console.error('Delete error:', error);
       toast.error(t('messages.serverError'));
@@ -308,6 +372,7 @@ const Products: React.FC = () => {
 
   const handleMaterialSaved = () => {
     fetchMaterials();
+    fetchStatistics();
     handleModalClose();
   };
 
@@ -358,6 +423,15 @@ const Products: React.FC = () => {
               )}
             </div>
             <button
+              type="button"
+              onClick={() => setShowFilters(prev => !prev)}
+              className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 flex items-center"
+              style={{ minWidth: 0 }}
+            >
+              <Filter className="w-5 h-5" />
+              <span className="mx-2">{t('common.filters') || 'فلاتر'}</span>
+            </button>
+            <button
               onClick={handleAddMaterial}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2 rtl:space-x-reverse"
             >
@@ -368,120 +442,151 @@ const Products: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mt-3 mb-6">
-        <div className="flex items-center flex-wrap gap-2 justify-between">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Autocomplete
-              options={categoryOptions}
-              getOptionLabel={option => option.label}
-              isOptionEqualToValue={(option, value) => option.value === value.value}
-              value={categoryOptions.find(opt => opt.value === categoryFilter) || null}
-              onChange={(_, value) => {
-                setCategoryFilter(value ? value.value : '');
-                setPage(1);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  // label={t('material.category')}
-                  placeholder={t('material.selectCategory') || 'Select category'}
-                  size="small"
-                  sx={{ minWidth: 220 }}
-                />
-              )}
-              openOnFocus
-              clearOnEscape
-            />
-            <Autocomplete
-              options={colorOptions}
-              getOptionLabel={option => option.label}
-              isOptionEqualToValue={(option, value) => option.value === value.value}
-              value={colorOptions.find(opt => opt.value === colorFilter) || null}
-              onChange={(_, value) => {
-                setColorFilter(value ? value.value : '');
-                setPage(1);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  // label={t('material.color') || 'Color'}
-                  placeholder={t('material.colors.selectColor') || 'Select color'}
-                  size="small"
-                  sx={{ minWidth: 220, }}
-                />
-              )}
-              openOnFocus
-              clearOnEscape
-            />
-            <Autocomplete
-              options={nationalitiesOptions}
-              getOptionLabel={option => option.label}
-              isOptionEqualToValue={(option, value) => option.value === value.value}
-              value={nationalitiesOptions.find(opt => opt.value === countryFilter) || null}
-              onChange={(_, value) => {
-                setCountryFilter(value ? value.value : '');
-                setPage(1);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  // label={t('material.country') || 'Country'}
-                  placeholder={t('material.countries.selectCountry') || 'Select country'}
-                  size="small"
-                  sx={{ minWidth: 220 }}
-                />
-              )}
-              openOnFocus
-              clearOnEscape
-            />
-            <input
-              type="checkbox"
-              id="lowStockOnly"
-              checked={lowStockOnly}
-              onChange={e => {
-                setLowStockOnly(e.target.checked);
-                setPage(1);
-              }}
-              className="form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="lowStockOnly" className="text-sm text-gray-700 cursor-pointer select-none">
-              {t('material.lowStockOnly') || 'Low Stock Only'}
-            </label>
-            <input
-              type="checkbox"
-              id="offersOnly"
-              checked={offersOnly}
-              onChange={e => {
-                setOffersOnly(e.target.checked);
-                setPage(1);
-              }}
-              className="form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="offersOnly" className="text-sm text-gray-700 cursor-pointer select-none">
-              {t('material.offersOnly') || 'Offers Only'}
-            </label>
-          </div>
-          <div className={`${isRTL ? 'mr-auto' : 'ml-auto'}`}>
-            <button
-              type="button"
-              onClick={() => {
-                setCategoryFilter('');
-                setColorFilter('');
-                setCountryFilter('');
-                setLowStockOnly(false);
-                setOffersOnly(false);
-                setPage(1);
-              }}
-              className="px-3 py-1 rounded bg-gray-100 border border-gray-300 text-gray-700 transition-colors text-sm disabled:opacity-50 disabled:hover:bg-gray-100 hover:bg-gray-200"
-              disabled={!areFiltersActive}
-            >
-              {t('common.resetFilters') || 'Reset Filters'}
-            </button>
-          </div>
-        </div>
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-6">
+        <StatCard
+          title={t('warehouse.totalQuantityM2') || 'كمية المنتجات (متر مربع)'}
+          value={statistics.totalQuantityM2.toLocaleString()}
+          unit={t('warehouse.m2')}
+          icon={<BarChart3 className="h-6 w-6" />}
+          color="blue"
+        />
+        <StatCard
+          title={t('warehouse.boxes') || 'صندوق'}
+          value={statistics.totalQuantityBoxes.toLocaleString()}
+          icon={<Box className="h-6 w-6" />} // <-- استخدمنا Box بدلاً من Package
+          color="blue"
+        />
+        <StatCard
+          title={t('warehouse.totalProducts') || 'عدد المنتجات'}
+          value={statistics.totalItems.toLocaleString()}
+          icon={<Package className="h-6 w-6" />}
+          color="indigo"
+        />
+        <StatCard
+          title={t('warehouse.lowStockItems') || 'منتجات منخفضة المخزون'}
+          value={statistics.lowStockItems.toLocaleString()}
+          icon={<AlertTriangle className="h-6 w-6" />}
+          color="red"
+        />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto border-b border-gray-200">
+      {showFilters && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mt-3 mb-6">
+          <div className="flex items-center flex-wrap gap-2 justify-between">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Autocomplete
+                options={categoryOptions}
+                getOptionLabel={option => option.label}
+                isOptionEqualToValue={(option, value) => option.value === value.value}
+                value={categoryOptions.find(opt => opt.value === categoryFilter) || null}
+                onChange={(_, value) => {
+                  setCategoryFilter(value ? value.value : '');
+                  setPage(1);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    // label={t('material.category')}
+                    placeholder={t('material.selectCategory') || 'Select category'}
+                    size="small"
+                    sx={{ minWidth: 220 }}
+                  />
+                )}
+                openOnFocus
+                clearOnEscape
+              />
+              <Autocomplete
+                options={colorOptions}
+                getOptionLabel={option => option.label}
+                isOptionEqualToValue={(option, value) => option.value === value.value}
+                value={colorOptions.find(opt => opt.value === colorFilter) || null}
+                onChange={(_, value) => {
+                  setColorFilter(value ? value.value : '');
+                  setPage(1);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    // label={t('material.color') || 'Color'}
+                    placeholder={t('material.colors.selectColor') || 'Select color'}
+                    size="small"
+                    sx={{ minWidth: 220, }}
+                  />
+                )}
+                openOnFocus
+                clearOnEscape
+              />
+              <Autocomplete
+                options={nationalitiesOptions}
+                getOptionLabel={option => option.label}
+                isOptionEqualToValue={(option, value) => option.value === value.value}
+                value={nationalitiesOptions.find(opt => opt.value === countryFilter) || null}
+                onChange={(_, value) => {
+                  setCountryFilter(value ? value.value : '');
+                  setPage(1);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    // label={t('material.country') || 'Country'}
+                    placeholder={t('material.countries.selectCountry') || 'Select country'}
+                    size="small"
+                    sx={{ minWidth: 220 }}
+                  />
+                )}
+                openOnFocus
+                clearOnEscape
+              />
+              <input
+                type="checkbox"
+                id="lowStockOnly"
+                checked={lowStockOnly}
+                onChange={e => {
+                  setLowStockOnly(e.target.checked);
+                  setPage(1);
+                }}
+                className="form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="lowStockOnly" className="text-sm text-gray-700 cursor-pointer select-none">
+                {t('material.lowStockOnly') || 'Low Stock Only'}
+              </label>
+              <input
+                type="checkbox"
+                id="offersOnly"
+                checked={offersOnly}
+                onChange={e => {
+                  setOffersOnly(e.target.checked);
+                  setPage(1);
+                }}
+                className="form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="offersOnly" className="text-sm text-gray-700 cursor-pointer select-none">
+                {t('material.offersOnly') || 'Offers Only'}
+              </label>
+            </div>
+            <div className={`${isRTL ? 'mr-auto' : 'ml-auto'}`}>
+              <button
+                type="button"
+                onClick={() => {
+                  setCategoryFilter('');
+                  setColorFilter('');
+                  setCountryFilter('');
+                  setLowStockOnly(false);
+                  setOffersOnly(false);
+                  setPage(1);
+                }}
+                className="px-3 py-1 rounded bg-gray-100 border border-gray-300 text-gray-700 transition-colors text-sm disabled:opacity-50 disabled:hover:bg-gray-100 hover:bg-gray-200"
+                disabled={!areFiltersActive}
+              >
+                {t('common.resetFilters') || 'Reset Filters'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto border-b border-gray-200 mt-6">
         <div className="overflow-x-auto">
           {materials.length === 0 ? (
             <div className="text-center py-12">

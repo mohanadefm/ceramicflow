@@ -792,8 +792,8 @@ const MaterialModal: React.FC<{
   ];
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between p-6 pb-4">
         <h3 className="text-lg font-semibold text-gray-900">
           {material ? t('warehouse.editMaterial') : t('warehouse.addMaterial')}
         </h3>
@@ -809,7 +809,8 @@ const MaterialModal: React.FC<{
         // Combine dimensions
         data.dimension = `${data.length || ''}x${data.width || ''}x${data.thickness || ''}`;
         onSubmit(data);
-      })} className="p-6 space-y-6">
+      })} className="flex flex-col h-full px-6">
+        <div className="flex-1 space-y-6 overflow-y-auto">
         {/* Image Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">{t('material.image')}</label>
@@ -1132,8 +1133,9 @@ const MaterialModal: React.FC<{
           errors={errors}
           placeholder={placeholderFactory}
         />
+        </div>
         {/* Actions */}
-        <div className="pt-6 border-t border-gray-200">
+        <div className="py-6 border-t border-gray-200">
           <button
             type="submit"
             disabled={loading}
