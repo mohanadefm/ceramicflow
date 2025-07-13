@@ -314,8 +314,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                           ${theme === 'dark' ? 'hover:bg-gray-800 text-gray-200' : 'hover:bg-gray-100 text-gray-700'}`}
                         onClick={() => { setUserMenuOpen(false); openAccountDialog(); }}
                       >
-                        <User className="h-6 w-6 opacity-80" />
-                        <span className="text-base font-semibold">{t('dialog.account')}</span>
+                        {isRTL ? (
+                          <>
+                            <span className="text-base font-semibold">{t('dialog.account')}</span>
+                            <User className="h-6 w-6 opacity-80" />
+                          </>
+                        ) : (
+                          <>
+                            <User className="h-6 w-6 opacity-80" />
+                            <span className="text-base font-semibold">{t('dialog.account')}</span>
+                          </>
+                        )}
                       </button>
                       <button
                         className={`flex items-center w-full px-5 py-3 gap-3 text-sm font-medium rounded-xl transition-colors duration-200 mt-1
@@ -323,8 +332,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                           ${theme === 'dark' ? 'hover:bg-gray-800 text-gray-200' : 'hover:bg-gray-100 text-gray-700'}`}
                         onClick={() => { setUserMenuOpen(false); setSettingsDialogOpen(true); }}
                       >
-                        <Settings className="h-6 w-6 opacity-80" />
-                        <span className="text-base font-semibold">{t('dialog.settings')}</span>
+                        {isRTL ? (
+                          <>
+                            <span className="text-base font-semibold">{t('dialog.settings')}</span>
+                            <Settings className="h-6 w-6 opacity-80" />
+                          </>
+                        ) : (
+                          <>
+                            <Settings className="h-6 w-6 opacity-80" />
+                            <span className="text-base font-semibold">{t('dialog.settings')}</span>
+                          </>
+                        )}
                       </button>
                     </div>
                     <div className="px-5 pb-4 pt-2">
@@ -332,8 +350,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         className={`flex items-center justify-center w-full gap-2 py-2 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors duration-200 text-base shadow ${isRTL ? 'flex-row-reverse' : ''}`}
                         onClick={() => { setUserMenuOpen(false); setLogoutDialogOpen(true); }}
                       >
-                        <LogOut className="h-5 w-5" />
-                        <span>{t('dialog.logout')}</span>
+                        {isRTL ? (
+                          <>
+                            <span>{t('dialog.logout')}</span>
+                            <LogOut className="h-5 w-5" style={{ transform: 'scaleX(-1)' }} />
+                          </>
+                        ) : (
+                          <>
+                            <LogOut className="h-5 w-5" />
+                            <span>{t('dialog.logout')}</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
