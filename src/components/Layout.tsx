@@ -22,7 +22,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout, updateUser } = useAuth();
-  const { language, isRTL, toggleLanguage, t } = useLanguage();
+  const { language, isRTL, t, translateErrorMessage, changeLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
@@ -35,6 +35,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = React.useState(false);
   const [settingsForm, setSettingsForm] = React.useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [settingsLoading, setSettingsLoading] = React.useState(false);
+  
+  // Validation states
+  const [formErrors, setFormErrors] = React.useState<{[key: string]: string}>({});
 
   // For extended fields
   const userAny = user as any;
@@ -82,13 +85,49 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       warehouseCode: userAny?.warehouseCode || '',
     });
     setAccountPhoto(null);
+    setFormErrors({}); // Clear previous errors
     setAccountDialogOpen(true);
   };
 
-  // Handle form change
+  // Validation functions
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    const phoneRegex = /^05\d{8}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const validateTaxNumber = (taxNumber: string): boolean => {
+    const taxRegex = /^\d+$/;
+    return taxRegex.test(taxNumber);
+  };
+
+  // Handle form change with validation
   const handleAccountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setAccountForm((prev: any) => ({ ...prev, [name]: value }));
+    
+    // Clear error when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    
+    // Real-time validation
+    let error = '';
+    if (name === 'email' && value && !validateEmail(value)) {
+      error = t('validation.invalidEmail') || 'البريد الإلكتروني غير صحيح';
+    } else if (name === 'phone' && value && !validatePhone(value)) {
+      error = t('validation.invalidPhone') || 'رقم الجوال يجب أن يبدأ بـ 05 ويتبعه 8 أرقام';
+    } else if (name === 'taxNumber' && value && !validateTaxNumber(value)) {
+      error = t('validation.invalidTaxNumber') || 'الرقم الضريبي يجب أن يحتوي على أرقام فقط';
+    }
+    
+    if (error) {
+      setFormErrors(prev => ({ ...prev, [name]: error }));
+    }
   };
 
   // Handle photo upload
@@ -101,6 +140,28 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Submit account update
   const handleAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate all fields before submission
+    const errors: {[key: string]: string} = {};
+    
+    if (!validateEmail(accountForm.email)) {
+      errors.email = t('validation.invalidEmail') || 'البريد الإلكتروني غير صحيح';
+    }
+    
+    if (!validatePhone(accountForm.phone)) {
+      errors.phone = t('validation.invalidPhone') || 'رقم الجوال يجب أن يبدأ بـ 05 ويتبعه 8 أرقام';
+    }
+    
+    if (accountForm.taxNumber && !validateTaxNumber(accountForm.taxNumber)) {
+      errors.taxNumber = t('validation.invalidTaxNumber') || 'الرقم الضريبي يجب أن يحتوي على أرقام فقط';
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error(t('validation.formErrors') || 'يرجى تصحيح الأخطاء في النموذج');
+      return;
+    }
+    
     setAccountLoading(true);
     try {
       let photoUrl = accountForm.photo;
@@ -127,8 +188,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       updateUser(res.data.user);
       toast.success(t('messages.accountUpdated') || 'تم تحديث الحساب بنجاح');
       setAccountDialogOpen(false);
+      setFormErrors({}); // Clear errors on success
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error.message || 'حدث خطأ أثناء تحديث الحساب');
+      const message = error?.response?.data?.message || error.message || 'حدث خطأ أثناء تحديث الحساب';
+      toast.error(translateErrorMessage(message));
     } finally {
       setAccountLoading(false);
     }
@@ -163,7 +226,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       setSettingsDialogOpen(false);
       setSettingsForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error.message || 'حدث خطأ أثناء تغيير كلمة المرور');
+      const message = error?.response?.data?.message || error.message || 'حدث خطأ أثناء تغيير كلمة المرور';
+      toast.error(translateErrorMessage(message));
     } finally {
       setSettingsLoading(false);
     }
@@ -207,7 +271,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               }}
               >
                 <button
-                  onClick={toggleLanguage}
+                  onClick={() => changeLanguage(language === 'en' ? 'ar' : 'en')}
                   className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors duration-200
                     ${theme === 'dark' ? 'text-gray-200 hover:text-blue-400 hover:bg-blue-900/30' : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'}`}
                   aria-label={language === 'en' ? 'العربية' : 'English'}
@@ -446,6 +510,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               onChange={handleAccountChange}
               fullWidth
               required
+              error={!!formErrors.phone}
+              helperText={formErrors.phone}
               className="mb-4 rounded-lg"
               InputLabelProps={{
                 style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
@@ -461,6 +527,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               fullWidth
               required
               type="email"
+              error={!!formErrors.email}
+              helperText={formErrors.email}
               className="mb-4 rounded-lg"
               InputLabelProps={{
                 style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },
@@ -489,6 +557,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               onChange={handleAccountChange}
               fullWidth
               required
+              error={!!formErrors.taxNumber}
+              helperText={formErrors.taxNumber}
               className="mb-4 rounded-lg"
               InputLabelProps={{
                 style: { color: theme === 'dark' ? '#e5e7eb' : undefined, textAlign: isRTL ? 'right' : 'left' },

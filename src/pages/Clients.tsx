@@ -78,7 +78,7 @@ const ClientModal: React.FC<{
   onClose: () => void;
   onSave: () => void;
 }> = ({ client, onClose, onSave }) => {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, translateErrorMessage } = useLanguage();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -157,11 +157,8 @@ const ClientModal: React.FC<{
       onSave();
     } catch (error: any) {
       console.error('Error saving client:', error);
-      if (error.response && error.response.data && error.response.data.message === 'Email or phone number already exists.') {
-        toast.error(t('messages.duplicateClient') || 'البريد الإلكتروني أو رقم الجوال مستخدم بالفعل.');
-      } else {
-        toast.error(t('messages.serverError') || 'خطأ في الخادم');
-      }
+      const message = error.response?.data?.message || 'Server error';
+      toast.error(translateErrorMessage(message));
     } finally {
       setLoading(false);
     }
@@ -386,7 +383,7 @@ const ClientDetailsDialog: React.FC<{
 };
 
 const Clients: React.FC = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, translateErrorMessage } = useLanguage();
   const { user } = useAuth();
   const { theme } = useTheme();
   const [clients, setClients] = useState<Client[]>([]);

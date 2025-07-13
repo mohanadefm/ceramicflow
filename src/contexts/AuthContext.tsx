@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useLanguage } from './LanguageContext';
 
 interface User {
   id: string;
@@ -44,6 +45,7 @@ const API_BASE_URL =
 axios.defaults.baseURL = API_BASE_URL;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { translateErrorMessage } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Login successful!');
     } catch (error: any) {
       const message = error.response?.data?.message || 'Login failed';
-      toast.error(message);
+      toast.error(translateErrorMessage(message));
       throw new Error(message);
     }
   };
@@ -116,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Registration successful!');
     } catch (error: any) {
       const message = error.response?.data?.message || 'Registration failed';
-      toast.error(message);
+      toast.error(translateErrorMessage(message));
       throw new Error(message);
     }
   };
