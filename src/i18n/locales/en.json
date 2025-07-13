@@ -94,6 +94,8 @@
     "warehouseCode": "Warehouse Code"
   },
   "clients": {
+    "totalOrdersValue": "Total Orders Value",
+    "topClient": "Top Client",
     "noClientStats": "No client stats found.",
     "orderCount": "Order Count",
     "totalClients": "Total Clients",
@@ -385,10 +387,12 @@
   "semiGloss": "Semi-gloss",
   "polished": "Polished",
   "offers": {
+    "box": "Box",
+    "m²": "m²",
     "totalOffers": "Total Offers",
     "totalQuantityMeters": "Total Quantity (m²)",
     "totalQuantityBoxes": "Total Quantity (Box)",
-    "mostFrequentCategory": "Most Frequent Category",
+    "largestDiscountedQuantity": "Largest Discounted Quantity",
     "mostFrequentFactory": "Most Frequent Factory",
     "mostFrequentColor": "Most Frequent Color",
     "mostFrequentCountry": "Most Frequent Country",

@@ -11,7 +11,8 @@ import {
   Image,
   Upload,
   X,
-  Warehouse
+  Warehouse,
+  Percent
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -391,9 +392,9 @@ const WarehouseDashboard: React.FC = () => {
               color="indigo"
             />
             <StatCard
-              title={t('offers.mostFrequentCategory') || 'أكثر فئة ظهورًا'}
-              value={offerStats?.mostFrequentCategory?t(`material.categories.${offerStats?.mostFrequentCategory}`) || '-':'-'}
-              icon={<BarChart3 className="h-6 w-6" />}
+              title={t('offers.largestDiscountedQuantity') || 'أكبر كمية مخصومة'}
+              value={offerStats?.largestDiscountedOffer ? `${t(`material.categories.${offerStats.largestDiscountedOffer.category}`) || offerStats.largestDiscountedOffer.category} - ${offerStats.largestDiscountedOffer.sku}` : '-'}
+              icon={<Percent className="h-6 w-6" />}
               color="green"
             />
           </div>

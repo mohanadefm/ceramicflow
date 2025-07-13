@@ -241,11 +241,15 @@ router.get('/warehouse/:warehouseId/statistics', authenticate, async (req, res) 
       }));
     // Total orders by all clients
     const totalOrdersByClients = orders.length;
+    
+    // Total value of all orders
+    const totalOrdersValue = orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
 
     res.json({
       statistics: {
         totalClients,
         totalOrdersByClients,
+        totalOrdersValue,
         topClientsByOrders,
         topClientsByValue
       }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit, Trash2, ShoppingCart, Package, User, Calendar, X, FileText, Filter } from 'lucide-react';
+import { Plus, Edit, Trash2, ShoppingCart, Package, User, Calendar, X, FileText, Filter, BarChart3, AlertTriangle, DollarSign, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Drawer from '@mui/material/Drawer';
@@ -118,6 +118,7 @@ const Orders: React.FC = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [showFilters, setShowFilters] = useState(false); // <-- حالة إظهار الفلاتر
+  const [orderStats, setOrderStats] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
@@ -131,6 +132,7 @@ const Orders: React.FC = () => {
       }
       fetchCustomers();
       fetchProducts();
+      fetchOrderStats();
     }
   }, [user, page, searchOrder, startDate, endDate, customerFilter]);
 
@@ -168,6 +170,24 @@ const Orders: React.FC = () => {
     } catch (error: any) {
       console.error('Error fetching products:', error);
       setProducts([]);
+    }
+  };
+
+  const fetchOrderStats = async () => {
+    if (!user || !user.id) return;
+    try {
+      const response = await axios.get(`/orders/warehouse/${user.id}/statistics`);
+      setOrderStats(response.data.statistics);
+    } catch (error) {
+      console.error('Error fetching order statistics:', error);
+      // تعيين قيم افتراضية في حالة الخطأ
+      setOrderStats({
+        totalOrders: 0,
+        totalSales: 0,
+        cancelledOrders: 0,
+        avgOrderPrice: 0,
+        avgOrderQuantity: 0
+      });
     }
   };
 
@@ -327,6 +347,36 @@ const Orders: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-6">
+        <StatCard
+          title={t('orders.totalOrders') || 'عدد الطلبات'}
+          value={orderStats?.totalOrders?.toLocaleString() || '0'}
+          icon={<ShoppingCart className="h-6 w-6" />}
+          color="blue"
+        />
+        <StatCard
+          title={t('orders.totalSales') || 'إجمالي المبيعات'}
+          value={orderStats?.totalSales?.toLocaleString(undefined, { maximumFractionDigits: 2 }) || '0'}
+          unit={t('orders.currency') || 'ر.س'}
+          icon={<DollarSign className="h-6 w-6" />}
+          color="green"
+        />
+        <StatCard
+          title={t('orders.avgOrderPrice') || 'متوسط سعر الطلب'}
+          value={orderStats?.avgOrderPrice?.toLocaleString(undefined, { maximumFractionDigits: 2 }) || '0'}
+          unit={t('orders.currency') || 'ر.س'}
+          icon={<TrendingUp className="h-6 w-6" />}
+          color="indigo"
+        />
+        <StatCard
+          title={t('orders.cancelledOrders') || 'الطلبات الملغاة'}
+          value={orderStats?.cancelledOrders?.toLocaleString() || '0'}
+          icon={<AlertTriangle className="h-6 w-6" />}
+          color="red"
+        />
       </div>
 
       {/* قسم الفلاتر: */}
@@ -1196,6 +1246,43 @@ const InvoiceDialog: React.FC<{ open: boolean; onClose: () => void; order: Order
         </div>
         {/* ملاحظة ختامية */}
         <div className="px-8 pb-6 pt-2 text-xs text-gray-500 border-t">{t('invoice.note')}</div>
+      </div>
+    </div>
+  );
+};
+
+// مكون StatCard لعرض الإحصائيات
+const StatCard: React.FC<{
+  title: string;
+  value: string;
+  unit?: string;
+  icon: React.ReactNode;
+  color: 'blue' | 'green' | 'indigo' | 'red' | 'orange';
+}> = ({ title, value, unit, icon, color }) => {
+  const colorBg = {
+    blue: 'bg-blue-50',
+    green: 'bg-green-50',
+    indigo: 'bg-indigo-50',
+    red: 'bg-red-50',
+    orange: 'bg-orange-50',
+  };
+  const colorIcon = {
+    blue: 'text-blue-500',
+    green: 'text-green-500',
+    indigo: 'text-indigo-500',
+    red: 'text-red-500',
+    orange: 'text-orange-500',
+  };
+  return (
+    <div className="rounded-xl bg-white shadow-sm border border-gray-100 px-6 py-5 flex items-center justify-between min-w-[220px]">
+      <div>
+        <div className="text-2xl font-semibold text-gray-900 mb-1 flex items-baseline gap-1">
+          {value} {unit && <span className="text-base text-gray-400 font-normal">{unit}</span>}
+        </div>
+        <div className="text-sm text-gray-500 font-medium">{title}</div>
+      </div>
+      <div className={`flex items-center justify-center w-12 h-12 rounded-full ${colorBg[color]}`}> 
+        {React.cloneElement(icon as React.ReactElement, { className: `w-7 h-7 ${colorIcon[color]}` })}
       </div>
     </div>
   );

@@ -139,13 +139,27 @@ router.get('/warehouse/:warehouseId/statistics', authenticate, async (req, res) 
     // Total quantity in boxes
     const totalQuantityBoxes = filteredOffers.reduce((sum, o) => sum + (o.quantityInBoxes || 0), 0);
 
-    // Most frequent category
-    const categoryCount = {};
+    // Largest discounted quantity (biggest quantity in meters with discount)
+    let largestDiscountedQuantity = 0;
+    let largestDiscountedOffer = null;
+    
     filteredOffers.forEach(o => {
-      const category = o.category || (o.product && o.product.category) || 'غير محدد';
-      categoryCount[category] = (categoryCount[category] || 0) + 1;
+      const quantityInMeters = o.quantityInMeters || 0;
+      if (quantityInMeters > largestDiscountedQuantity) {
+        largestDiscountedQuantity = quantityInMeters;
+        largestDiscountedOffer = o;
+      }
     });
-    const mostFrequentCategory = Object.entries(categoryCount).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+    
+    // Prepare offer info for frontend
+    let largestDiscountedOfferInfo = null;
+    if (largestDiscountedOffer) {
+      largestDiscountedOfferInfo = {
+        category: largestDiscountedOffer.category || (largestDiscountedOffer.product && largestDiscountedOffer.product.category) || '',
+        sku: largestDiscountedOffer.sku || (largestDiscountedOffer.product && largestDiscountedOffer.product.sku) || '',
+        quantityInMeters: largestDiscountedOffer.quantityInMeters || 0
+      };
+    }
 
     // Most frequent factory
     const factoryCount = {};
@@ -176,7 +190,7 @@ router.get('/warehouse/:warehouseId/statistics', authenticate, async (req, res) 
         totalOffers,
         totalQuantityMeters,
         totalQuantityBoxes,
-        mostFrequentCategory,
+        largestDiscountedOffer: largestDiscountedOfferInfo,
         mostFrequentFactory,
         mostFrequentColor,
         mostFrequentCountry

@@ -13,7 +13,10 @@ import {
   User,
   X,
   Upload,
-  Eye
+  Eye,
+  BarChart3,
+  Warehouse,
+  Crown
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -400,12 +403,26 @@ const Clients: React.FC = () => {
   const limit = 10;
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [clientDetails, setClientDetails] = useState<Client | null>(null);
+  const [clientStats, setClientStats] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
       fetchClients();
     }
   }, [user, sortBy, sortOrder, page, searchValue]);
+
+  useEffect(() => {
+    const fetchClientStats = async () => {
+      if (!user || !user.id) return;
+      try {
+        const response = await axios.get(`/clients/warehouse/${user.id}/statistics`);
+        setClientStats(response.data.statistics);
+      } catch (error) {
+        // يمكن إضافة توست أو لوج هنا
+      }
+    };
+    fetchClientStats();
+  }, [user]);
 
   const fetchClients = async () => {
     if (!user) return;
@@ -490,7 +507,7 @@ const Clients: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 rtl:space-x-reverse">
@@ -537,6 +554,36 @@ const Clients: React.FC = () => {
         </div>
       </div>
 
+      {/* Client Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-6">
+        <StatCard
+          title={t('clients.totalClients') || 'عدد العملاء'}
+          value={clientStats?.totalClients?.toLocaleString() || '0'}
+          icon={<Users className="h-6 w-6" />}
+          color="indigo"
+        />
+        <StatCard
+          title={t('clients.totalOrdersByClients') || 'إجمالي الطلبات من العملاء'}
+          value={clientStats?.totalOrdersByClients?.toLocaleString() || '0'}
+          icon={<ShoppingCart className="h-6 w-6" />}
+          color="blue"
+        />
+        <StatCard
+          title={t('clients.totalOrdersValue') || 'إجمالي قيمة الطلبات'}
+          value={clientStats?.totalOrdersValue?.toLocaleString() || '0'}
+          unit={t('orders.currency') || 'ر.س'}
+          icon={<DollarSign className="h-6 w-6" />}
+          color="green"
+        />
+        <StatCard
+          title={t('clients.topClient') || 'أكثر عميل طلباً'}
+          value={clientStats?.topClientsByOrders?.[0]?.client?.name || '-'}
+          // subtitle={clientStats?.topClientsByOrders?.[0] ? `${clientStats.topClientsByOrders[0].orderCount} ${t('clients.orders') || 'طلب'}` : ''}
+          icon={<Crown className="h-6 w-6" />}
+          color="yellow"
+        />
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <div className="overflow-x-auto">
           {clients.length === 0 ? (
@@ -549,7 +596,6 @@ const Clients: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200" dir={isRTL ? 'rtl' : 'ltr'}>
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className={`px-2 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider`}>#</th>
                     <th className={`px-2 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
                       {t('clients.photo') || 'الصورة'}
                     </th>
@@ -579,7 +625,6 @@ const Clients: React.FC = () => {
                       key={client._id}
                       className={`transition-colors duration-200 hover:bg-gray-50 ${index === clients.length - 1 ? ' !border-b border-gray-200' : ''}`}
                     >
-                      <td className={`px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center`}>{clients.length - index}</td>
                       <td className={`px-2 py-4 whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'}`}>
                         <div className="h-12 w-12 rounded-full bg-gray-100 overflow-hidden">
                                       {client.photo ? (
@@ -753,6 +798,48 @@ const Clients: React.FC = () => {
       )}
 
       <ClientDetailsDialog client={clientDetails} open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} />
+    </div>
+  );
+};
+
+const StatCard: React.FC<{
+  title: string;
+  value: string;
+  unit?: string;
+  subtitle?: string;
+  icon: React.ReactNode;
+  color: 'blue' | 'green' | 'indigo' | 'red' | 'orange' | 'yellow';
+}> = ({ title, value, unit, subtitle, icon, color }) => {
+  const colorBg = {
+    blue: 'bg-blue-50',
+    green: 'bg-green-50',
+    indigo: 'bg-indigo-50',
+    red: 'bg-red-50',
+    orange: 'bg-orange-50',
+    yellow: 'bg-yellow-50',
+  };
+  const colorIcon = {
+    blue: 'text-blue-500',
+    green: 'text-green-500',
+    indigo: 'text-indigo-500',
+    red: 'text-red-500',
+    orange: 'text-orange-500',
+    yellow: 'text-yellow-500',
+  };
+  return (
+    <div className="rounded-xl bg-white shadow-sm border border-gray-100 px-6 py-5 flex items-center justify-between min-w-[220px]">
+      <div>
+        <div className="text-2xl font-semibold text-gray-900 mb-1 flex items-baseline gap-1">
+          {value} {unit && <span className="text-base text-gray-400 font-normal">{unit}</span>}
+        </div>
+        <div className="text-sm text-gray-500 font-medium">{title}</div>
+        {subtitle && (
+          <div className="text-xs text-gray-400 mt-1">{subtitle}</div>
+        )}
+      </div>
+      <div className={`flex items-center justify-center w-12 h-12 rounded-full ${colorBg[color]}`}> 
+        {React.cloneElement(icon as React.ReactElement, { className: `w-7 h-7 ${colorIcon[color]}` })}
+      </div>
     </div>
   );
 };

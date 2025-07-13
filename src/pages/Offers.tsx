@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit, Trash2, Image, Package, Warehouse, Tag } from 'lucide-react';
+import { Plus, Edit, Trash2, Image, Package, Warehouse, Tag, BarChart3, TrendingUp, Layers, Percent, Box } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import OfferModal from '../components/OfferModal';
@@ -62,9 +62,13 @@ const Offers: React.FC = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const { theme } = useTheme();
+  const [offerStats, setOfferStats] = useState<any>(null);
 
   useEffect(() => {
-    if (user) fetchOffers();
+    if (user) {
+      fetchOffers();
+      fetchOfferStats();
+    }
   }, [user, page]);
 
   const fetchOffers = async () => {
@@ -76,6 +80,23 @@ const Offers: React.FC = () => {
       toast.error(t('messages.networkError'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOfferStats = async () => {
+    if (!user || !user.id) return;
+    try {
+      const response = await axios.get(`/offers/warehouse/${user.id}/statistics`);
+      setOfferStats(response.data.statistics);
+    } catch (error) {
+      console.error('Error fetching offer statistics:', error);
+      // تعيين قيم افتراضية في حالة الخطأ
+      setOfferStats({
+        totalOffers: 0,
+        totalQuantityMeters: 0,
+        totalQuantityBoxes: 0,
+        mostFrequentCategory: null
+      });
     }
   };
 
@@ -122,7 +143,7 @@ const Offers: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="">
       <div className={`rounded-xl shadow-sm border p-6 transition-colors duration-200 ${theme === 'dark' ? 'bg-[#23232a] border-gray-800' : 'bg-white border-gray-200'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 rtl:space-x-reverse">
@@ -144,6 +165,37 @@ const Offers: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-6">
+        <StatCard
+          title={t('offers.totalOffers') || 'عدد العروض'}
+          value={offerStats?.totalOffers?.toLocaleString() || '0'}
+          icon={<Tag className="h-6 w-6" />}
+          color="blue"
+        />
+        <StatCard
+          title={t('offers.totalQuantityMeters') || 'إجمالي الكمية (متر مربع)'}
+          value={offerStats?.totalQuantityMeters?.toLocaleString() || '0'}
+          unit={t("offers.m²")}
+          icon={<Layers className="h-6 w-6" />}
+          color="green"
+        />
+        <StatCard
+          title={t('offers.totalQuantityBoxes') || 'إجمالي الكمية (صندوق)'}
+          value={offerStats?.totalQuantityBoxes?.toLocaleString() || '0'}
+          // unit={t('warehouse.boxes') || 'صندوق'}
+          icon={<Box className="h-6 w-6" />}
+          color="indigo"
+        />
+        <StatCard
+          title={t('offers.largestDiscountedQuantity') || 'أكبر كمية مخصومة'}
+          value={offerStats?.largestDiscountedOffer ? `${t(`material.categories.${offerStats.largestDiscountedOffer.category}`) || offerStats.largestDiscountedOffer.category} - ${offerStats.largestDiscountedOffer.sku}` : '-'}
+          icon={<Percent className="h-6 w-6" />}
+          color="orange"
+        />
+      </div>
+
       <div className={`rounded-xl shadow-sm border overflow-hidden transition-colors duration-200 ${theme === 'dark' ? 'bg-[#23232a] border-gray-800' : 'bg-white border-gray-200'}`}>
         <div className="overflow-x-auto">
           {offers.length === 0 ? (
@@ -329,6 +381,43 @@ const Offers: React.FC = () => {
         </div>,
         document.body
       )}
+    </div>
+  );
+};
+
+// مكون StatCard لعرض الإحصائيات
+const StatCard: React.FC<{
+  title: string;
+  value: string;
+  unit?: string;
+  icon: React.ReactNode;
+  color: 'blue' | 'green' | 'indigo' | 'red' | 'orange';
+}> = ({ title, value, unit, icon, color }) => {
+  const colorBg = {
+    blue: 'bg-blue-50',
+    green: 'bg-green-50',
+    indigo: 'bg-indigo-50',
+    red: 'bg-red-50',
+    orange: 'bg-orange-50',
+  };
+  const colorIcon = {
+    blue: 'text-blue-500',
+    green: 'text-green-500',
+    indigo: 'text-indigo-500',
+    red: 'text-red-500',
+    orange: 'text-orange-500',
+  };
+  return (
+    <div className="rounded-xl bg-white shadow-sm border border-gray-100 px-6 py-5 flex items-center justify-between min-w-[220px]">
+      <div>
+        <div className="text-2xl font-semibold text-gray-900 mb-1 flex items-baseline gap-1">
+          {value} {unit && <span className="text-base text-gray-400 font-normal">{unit}</span>}
+        </div>
+        <div className="text-sm text-gray-500 font-medium">{title}</div>
+      </div>
+      <div className={`flex items-center justify-center w-12 h-12 rounded-full ${colorBg[color]}`}> 
+        {React.cloneElement(icon as React.ReactElement, { className: `w-7 h-7 ${colorIcon[color]}` })}
+      </div>
     </div>
   );
 };
