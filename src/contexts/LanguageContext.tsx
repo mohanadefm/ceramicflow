@@ -155,6 +155,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return t(translationKey, message);
     }
 
+    // معالجة أخطاء كلمة المرور القصيرة
+    if (
+      message.includes('Password must be at least 6 characters long') ||
+      message.includes('User validation failed: password: Password must be at least 6 characters long')
+    ) {
+      return t('messages.passwordTooShort');
+    }
+
     // إذا لم يتم العثور على الترجمة، إرجاع الرسالة الأصلية
     return message;
   };

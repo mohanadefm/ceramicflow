@@ -385,7 +385,7 @@
     "authenticationRequired": "المصادقة مطلوبة",
     "accessDeniedInsufficientPermissions": "تم رفض الوصول. صلاحيات غير كافية.",
     "warehouseRegisteredSuccessfully": "تم تسجيل المستودع بنجاح",
-    "emailOrWarehouseCodeExists": "البريد الإلكتروني أو كود المستودع موجود بالفعل",
+    "emailOrWarehouseCodeExists": "البريد الإلكتروني موجود بالفعل",
     "failedToRegisterWarehouse": "فشل في تسجيل المستودع",
     "exhibitionRegisteredSuccessfully": "تم تسجيل المعرض بنجاح",
     "emailAlreadyExists": "البريد الإلكتروني موجود بالفعل",
@@ -444,7 +444,8 @@
     "failedToFetchOfferStatistics": "فشل في جلب إحصائيات العروض",
     "noFileUploaded": "لم يتم رفع أي ملف",
     "routeNotFound": "المسار غير موجود",
-    "internalServerError": "خطأ داخلي في الخادم"
+    "internalServerError": "خطأ داخلي في الخادم",
+    "passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل"
   },
   "theme": {
     "nightMode": "الوضع الداكن",
@@ -575,6 +576,7 @@
     "toDate": "إلى تاريخ"
   },
   "invoice": {
+    "print": "طباعة",
     "notes":"الملاحظات",
     "shippingAddress":"عنوان الشحن",
     "title": "الفاتورة",

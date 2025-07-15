@@ -37,7 +37,7 @@ const Login: React.FC = () => {
     <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-gray-50 px-4 sm:px-6 lg:px-8 ${isRTL ? 'font-arabic' : ''}`}>
       <div className="max-w-md w-full space-y-8">
         {/* Language Toggle */}
-        <div className="flex justify-end">
+        {/* <div className="flex justify-end">
           <button
             onClick={toggleLanguage}
             className="flex items-center space-x-1 rtl:space-x-reverse px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white hover:shadow-sm transition-all duration-200"
@@ -45,7 +45,7 @@ const Login: React.FC = () => {
             <Globe className="h-4 w-4" />
             <span>{language === 'en' ? 'العربية' : 'English'}</span>
           </button>
-        </div>
+        </div> */}
 
         {/* Header */}
         <div className="text-center">

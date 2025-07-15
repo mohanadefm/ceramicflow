@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, AuthContext, useAuth } from './contexts/AuthContext';
-import { LanguageProvider } from './contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -16,6 +16,12 @@ import Clients from './pages/Clients';
 import { ThemeProvider } from './contexts/ThemeContext';
 import './i18n/config';
 import Support from './pages/Support';
+
+// مكون وسيط لإجبار إعادة بناء Layout عند تغيير اللغة
+const LanguageKeyWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { language } = useLanguage();
+  return <Layout key={language}>{children}</Layout>;
+};
 
 function App() {
   return (
@@ -32,9 +38,9 @@ function App() {
                   path="/dashboard" 
                   element={
                     <ProtectedRoute>
-                      <Layout>
+                      <LanguageKeyWrapper>
                         <DashboardRouter />
-                      </Layout>
+                      </LanguageKeyWrapper>
                     </ProtectedRoute>
                   } 
                 />
@@ -42,9 +48,9 @@ function App() {
                   path="/products" 
                   element={
                     <ProtectedRoute>
-                      <Layout>
+                      <LanguageKeyWrapper>
                         <Products />
-                      </Layout>
+                      </LanguageKeyWrapper>
                     </ProtectedRoute>
                   } 
                 />
@@ -52,9 +58,9 @@ function App() {
                   path="/orders" 
                   element={
                     <ProtectedRoute>
-                      <Layout>
+                      <LanguageKeyWrapper>
                         <Orders />
-                      </Layout>
+                      </LanguageKeyWrapper>
                     </ProtectedRoute>
                   } 
                 />
@@ -62,9 +68,9 @@ function App() {
                   path="/offers" 
                   element={
                     <ProtectedRoute>
-                      <Layout>
+                      <LanguageKeyWrapper>
                         <Offers />
-                      </Layout>
+                      </LanguageKeyWrapper>
                     </ProtectedRoute>
                   } 
                 />
@@ -72,9 +78,9 @@ function App() {
                   path="/clients" 
                   element={
                     <ProtectedRoute>
-                      <Layout>
+                      <LanguageKeyWrapper>
                         <Clients />
-                      </Layout>
+                      </LanguageKeyWrapper>
                     </ProtectedRoute>
                   } 
                 />
@@ -82,9 +88,9 @@ function App() {
                   path="/support" 
                   element={
                     <ProtectedRoute>
-                      <Layout>
+                      <LanguageKeyWrapper>
                         <Support />
-                      </Layout>
+                      </LanguageKeyWrapper>
                     </ProtectedRoute>
                   } 
                 />

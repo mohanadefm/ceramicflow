@@ -428,7 +428,8 @@
     "failedToFetchOfferStatistics": "Failed to fetch offer statistics",
     "noFileUploaded": "No file uploaded",
     "routeNotFound": "Route not found",
-    "internalServerError": "Internal server error"
+    "internalServerError": "Internal server error",
+    "passwordTooShort": "Password must be at least 6 characters long"
   },
   "theme": {
     "nightMode": "Night Mode",
@@ -569,6 +570,7 @@
     "toDate": "To Date"
   },
   "invoice": {
+    "print": "Print",
     "notes":"Notes",
     "shippingAddress":"Shipping Address",
     "title": "Invoice",

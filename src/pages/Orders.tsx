@@ -1245,7 +1245,15 @@ const InvoiceDialog: React.FC<{ open: boolean; onClose: () => void; order: Order
           </div>
         </div>
         {/* ملاحظة ختامية */}
-        <div className="px-8 pb-6 pt-2 text-xs text-gray-500 border-t">{t('invoice.note')}</div>
+        <div className="px-8 pb-6 pt-2 text-xs text-gray-500 border-t flex justify-between items-center">
+          <span>{t('invoice.note')}</span>
+          <button 
+            onClick={() => window.print()}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200"
+          >
+            {t('invoice.print')}
+          </button>
+        </div>
       </div>
     </div>
   );

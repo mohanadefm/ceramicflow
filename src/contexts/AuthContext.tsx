@@ -45,7 +45,7 @@ const API_BASE_URL =
 axios.defaults.baseURL = API_BASE_URL;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { translateErrorMessage } = useLanguage();
+  const { translateErrorMessage, t } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(user);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
-      toast.success('Login successful!');
+      toast.success(t('messages.loginSuccess'));
     } catch (error: any) {
       const message = error.response?.data?.message || 'Login failed';
       toast.error(translateErrorMessage(message));
@@ -115,11 +115,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(token);
       setUser(user);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      toast.success('Registration successful!');
+      toast.success(t('messages.registerSuccess'));
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Registration failed';
-      toast.error(translateErrorMessage(message));
-      throw new Error(message);
+      // Prefer detailed backend error if available
+      const backendError = error.response?.data?.error || error.response?.data?.message;
+      if (backendError) {
+        toast.error(translateErrorMessage(backendError));
+      } else {
+        toast.error(t('messages.failedToRegisterWarehouse'));
+      }
+      throw new Error(backendError || 'Registration failed');
     }
   };
 
@@ -128,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     setUser(null);
     delete axios.defaults.headers.common['Authorization'];
-    toast.success('Logged out successfully');
+    toast.success(t('messages.logoutSuccess'));
   };
 
   const value: AuthContextType = {

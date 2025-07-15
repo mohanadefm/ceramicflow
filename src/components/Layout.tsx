@@ -15,6 +15,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { LogOut, Globe, User, Package, Search, Sun, Moon, Bell, Settings, Edit, X } from 'lucide-react';
 import Tooltip from '@mui/material/Tooltip';
+import { useTranslation } from 'react-i18next';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -22,7 +23,8 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout, updateUser } = useAuth();
-  const { language, isRTL, t, translateErrorMessage, changeLanguage } = useLanguage();
+  const { language, isRTL, translateErrorMessage, changeLanguage } = useLanguage();
+  const { t } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
